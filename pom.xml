@@ -10,6 +10,14 @@
     <artifactId>conexao-postgres</artifactId>
     <version>1.0</version>
 
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+    </build>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+    </properties>
+
     <dependencies>
 
         <dependency>

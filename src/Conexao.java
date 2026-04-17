@@ -8,10 +8,11 @@ public class Conexao {
         String usuario = System.getenv("DB_USER");
         String senha = System.getenv("DB_PASSWORD");
 
-        if (url == null || usuario == null || senha == null) {
+        if (url == null || usuario == null || senha == null
+                || url.isBlank() || usuario.isBlank() || senha.isBlank()) {
             throw new IllegalStateException("Defina DB_URL, DB_USER e DB_PASSWORD nas variáveis de ambiente.");
         }
 
-        return DriverManager.getConnection(url, usuario, senha);
+        return DriverManager.getConnection(url.trim(), usuario.trim(), senha);
     }
 }
