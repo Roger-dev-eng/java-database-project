@@ -1,6 +1,7 @@
 target/
 bin/
 .vscode/
-.settings/
 .project
 out/
+.settings/
+.project
