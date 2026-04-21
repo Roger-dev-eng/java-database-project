@@ -12,7 +12,10 @@ public class Joins {
     // INNER JOIN com jogadores e jogos
     public static List<Object[]> avaliacoesComJogadoresJogos(Connection conexao) throws SQLException {
         List<Object[]> resultados = new ArrayList<>();
-        String sql = ""; // TODO: Inserir SQL com INNER JOIN entre avaliações, jogadores e jogos
+        String sql = "SELECT a.id_avaliacao, a.nota, a.comentario, a.status, jg.nickname, j.nome AS jogo_nome, j.genero " +
+                     "FROM avaliacoes a " +
+                     "INNER JOIN jogadores jg ON a.fk_jogador = jg.id_jogador " +
+                     "INNER JOIN jogos j ON a.fk_jogo = j.id_jogo";
         
         try (PreparedStatement pstmt = conexao.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {

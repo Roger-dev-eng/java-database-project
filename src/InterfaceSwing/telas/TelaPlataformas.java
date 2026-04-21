@@ -1,4 +1,4 @@
-package interfacesswing;
+package InterfaceSwing.telas;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -19,6 +19,7 @@ public class TelaPlataformas extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(900, 600);
         setLocationRelativeTo(null);
+        EstiloUI.aplicarTemaJanela(this);
 
         try {
             conexao = Conexao.conectar();
@@ -28,20 +29,16 @@ public class TelaPlataformas extends JFrame {
             return;
         }
 
-        // Painel principal
         JPanel painelPrincipal = new JPanel(new BorderLayout(10, 10));
         painelPrincipal.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        painelPrincipal.setBackground(EstiloUI.COR_FUNDO);
 
-        // Painel de formulário
         JPanel painelFormulario = criarPainelFormulario();
 
-        // Painel de tabela
         JPanel painelTabela = criarPainelTabela();
 
-        // Painel de botões
         JPanel painelBotoes = criarPainelBotoes();
 
-        // Adicionar ao painel principal
         painelPrincipal.add(painelFormulario, BorderLayout.NORTH);
         painelPrincipal.add(painelTabela, BorderLayout.CENTER);
         painelPrincipal.add(painelBotoes, BorderLayout.SOUTH);
@@ -54,18 +51,22 @@ public class TelaPlataformas extends JFrame {
 
     private JPanel criarPainelFormulario() {
         JPanel painel = new JPanel(new GridLayout(1, 6, 10, 10));
-        painel.setBorder(BorderFactory.createTitledBorder("Formulário de Plataformas"));
+        painel.setBorder(EstiloUI.bordaSecao("Formulário de Plataformas"));
+        painel.setBackground(EstiloUI.COR_CARD);
 
         painel.add(new JLabel("Nome:"));
         txtNome = new JTextField();
+        EstiloUI.estilizarCampo(txtNome);
         painel.add(txtNome);
 
         painel.add(new JLabel("Horas Jogadas:"));
         txtHoras = new JTextField();
+        EstiloUI.estilizarCampo(txtHoras);
         painel.add(txtHoras);
 
         painel.add(new JLabel("Jogador:"));
         comboJogador = new JComboBox<>();
+        EstiloUI.estilizarCombo(comboJogador);
         painel.add(comboJogador);
 
         return painel;
@@ -73,12 +74,14 @@ public class TelaPlataformas extends JFrame {
 
     private JPanel criarPainelTabela() {
         JPanel painel = new JPanel(new BorderLayout());
-        painel.setBorder(BorderFactory.createTitledBorder("Lista de Plataformas"));
+        painel.setBorder(EstiloUI.bordaSecao("Lista de Plataformas"));
+        painel.setBackground(EstiloUI.COR_CARD);
 
         String[] colunas = {"ID", "Nome", "Horas Jogadas", "Última Sessão", "Jogador (ID)"};
         modeloTabela = new DefaultTableModel(colunas, 0);
         tabelaPlataformas = new JTable(modeloTabela);
         tabelaPlataformas.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        EstiloUI.estilizarTabela(tabelaPlataformas);
 
         JScrollPane scrollPane = new JScrollPane(tabelaPlataformas);
         painel.add(scrollPane, BorderLayout.CENTER);
@@ -88,6 +91,7 @@ public class TelaPlataformas extends JFrame {
 
     private JPanel criarPainelBotoes() {
         JPanel painel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        painel.setBackground(EstiloUI.COR_FUNDO);
 
         btnNovo = new JButton("Novo");
         btnSalvar = new JButton("Salvar");
@@ -95,13 +99,18 @@ public class TelaPlataformas extends JFrame {
         btnDeletar = new JButton("Deletar");
         btnBuscarTodos = new JButton("Buscar Todos");
 
+        EstiloUI.estilizarBotao(btnNovo, new Color(90, 103, 117));
+        EstiloUI.estilizarBotao(btnSalvar, new Color(43, 142, 95));
+        EstiloUI.estilizarBotao(btnEditar, new Color(27, 115, 173));
+        EstiloUI.estilizarBotao(btnDeletar, new Color(188, 72, 72));
+        EstiloUI.estilizarBotao(btnBuscarTodos, new Color(120, 96, 173));
+
         painel.add(btnNovo);
         painel.add(btnSalvar);
         painel.add(btnEditar);
         painel.add(btnDeletar);
         painel.add(btnBuscarTodos);
 
-        // Listeners
         btnNovo.addActionListener(e -> limparFormulario());
         btnSalvar.addActionListener(e -> salvarPlataforma());
         btnEditar.addActionListener(e -> editarPlataforma());
@@ -146,7 +155,7 @@ public class TelaPlataformas extends JFrame {
                 return;
             }
 
-            boolean sucesso = ddl.Insert.inserirPlataforma(conexao, nome, horas, null, idJogador);
+            boolean sucesso = dml.Insert.inserirPlataforma(conexao, nome, horas, null, idJogador);
             if (sucesso) {
                 JOptionPane.showMessageDialog(this, "Plataforma salva com sucesso!");
                 limparFormulario();

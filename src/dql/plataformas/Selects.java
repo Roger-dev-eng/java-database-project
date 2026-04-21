@@ -52,7 +52,7 @@ public class Selects {
 
     public static List<Object[]> filtrarPorNome(Connection conexao, String nome) throws SQLException {
         List<Object[]> resultados = new ArrayList<>();
-        String sql = "SELECT * FROM plataforma WHERE nome LIKE '%?%'";
+        String sql = "SELECT * FROM plataformas WHERE nome LIKE ?";
         
         try (PreparedStatement pstmt = conexao.prepareStatement(sql)) {
             pstmt.setString(1, "%" + nome + "%");

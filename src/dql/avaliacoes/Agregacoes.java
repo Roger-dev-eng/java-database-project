@@ -10,7 +10,7 @@ import java.util.List;
 public class Agregacoes {
 
     public static Object[] contarTotal(Connection conexao) throws SQLException {
-        String sql = ""; // TODO: Inserir SQL para contar total de avaliações
+        String sql = "SELECT COUNT(*) AS total FROM avaliacoes";
         
         try (PreparedStatement pstmt = conexao.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
@@ -25,7 +25,7 @@ public class Agregacoes {
     }
 
     public static Object[] mediaNotasGerais(Connection conexao) throws SQLException {
-        String sql = ""; // TODO: Inserir SQL para calcular média de notas (AVG)
+        String sql = "SELECT AVG(nota) AS media_notas FROM avaliacoes";
         
         try (PreparedStatement pstmt = conexao.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
@@ -41,7 +41,11 @@ public class Agregacoes {
 
     public static List<Object[]> mediaNotasPorJogo(Connection conexao) throws SQLException {
         List<Object[]> resultados = new ArrayList<>();
-        String sql = ""; // TODO: Inserir SQL para média de notas por jogo (AVG, GROUP BY)
+        String sql = "SELECT j.nome AS jogo_nome, AVG(a.nota) AS media_notas, COUNT(a.id_avaliacao) AS total_avaliacoes " +
+                     "FROM avaliacoes a " +
+                     "INNER JOIN jogos j ON a.fk_jogo = j.id_jogo " +
+                     "GROUP BY j.id_jogo, j.nome " +
+                     "ORDER BY media_notas DESC";
         
         try (PreparedStatement pstmt = conexao.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
@@ -60,7 +64,11 @@ public class Agregacoes {
 
     public static List<Object[]> mediaNotasPorJogador(Connection conexao) throws SQLException {
         List<Object[]> resultados = new ArrayList<>();
-        String sql = ""; // TODO: Inserir SQL para média de notas por jogador (AVG, GROUP BY)
+        String sql = "SELECT jg.nickname, AVG(a.nota) AS media_notas, COUNT(a.id_avaliacao) AS total_avaliacoes " +
+                     "FROM avaliacoes a " +
+                     "INNER JOIN jogadores jg ON a.fk_jogador = jg.id_jogador " +
+                     "GROUP BY jg.id_jogador, jg.nickname " +
+                     "ORDER BY media_notas DESC";
         
         try (PreparedStatement pstmt = conexao.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
@@ -79,7 +87,7 @@ public class Agregacoes {
 
     public static List<Object[]> distribuicaoNotas(Connection conexao) throws SQLException {
         List<Object[]> resultados = new ArrayList<>();
-        String sql = ""; // TODO: Inserir SQL para distribuição de notas (COUNT, GROUP BY)
+        String sql = "SELECT nota, COUNT(*) AS quantidade FROM avaliacoes GROUP BY nota ORDER BY nota";
         
         try (PreparedStatement pstmt = conexao.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
@@ -97,7 +105,12 @@ public class Agregacoes {
 
     public static List<Object[]> jogosMaisAvaliados(Connection conexao) throws SQLException {
         List<Object[]> resultados = new ArrayList<>();
-        String sql = ""; // TODO: Inserir SQL para listar jogos mais avaliados (COUNT, GROUP BY, HAVING, ORDER BY)
+        String sql = "SELECT j.nome AS jogo_nome, COUNT(a.id_avaliacao) AS total_avaliacoes, AVG(a.nota) AS media_notas " +
+                     "FROM jogos j " +
+                     "LEFT JOIN avaliacoes a ON j.id_jogo = a.fk_jogo " +
+                     "GROUP BY j.id_jogo, j.nome " +
+                     "HAVING COUNT(a.id_avaliacao) > 0 " +
+                     "ORDER BY total_avaliacoes DESC, media_notas DESC";
         
         try (PreparedStatement pstmt = conexao.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
@@ -116,7 +129,12 @@ public class Agregacoes {
 
     public static List<Object[]> avaliacoesRecentes(Connection conexao, Integer dias) throws SQLException {
         List<Object[]> resultados = new ArrayList<>();
-        String sql = ""; // TODO: Inserir SQL para listar avaliações dos últimos N dias
+        String sql = "SELECT a.id_avaliacao, a.nota, j.nome AS jogo_nome, jg.nickname, a.data_avaliacao " +
+                     "FROM avaliacoes a " +
+                     "INNER JOIN jogos j ON a.fk_jogo = j.id_jogo " +
+                     "INNER JOIN jogadores jg ON a.fk_jogador = jg.id_jogador " +
+                     "WHERE a.data_avaliacao >= CURRENT_DATE - (? * INTERVAL '1 day') " +
+                     "ORDER BY a.data_avaliacao DESC";
         
         try (PreparedStatement pstmt = conexao.prepareStatement(sql)) {
             pstmt.setInt(1, dias);

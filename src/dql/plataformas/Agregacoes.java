@@ -10,7 +10,7 @@ import java.util.List;
 public class Agregacoes {
 
     public static Object[] contarTotal(Connection conexao) throws SQLException {
-        String sql = "SELECT COUNT(*) AS total FROM plataforma";
+        String sql = "SELECT COUNT(*) AS total FROM plataformas";
         
         try (PreparedStatement pstmt = conexao.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {

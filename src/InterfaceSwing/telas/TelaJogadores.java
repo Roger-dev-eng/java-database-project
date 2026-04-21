@@ -1,4 +1,4 @@
-package interfacesswing;
+package InterfaceSwing.telas;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -19,6 +19,7 @@ public class TelaJogadores extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(900, 600);
         setLocationRelativeTo(null);
+        EstiloUI.aplicarTemaJanela(this);
 
         try {
             conexao = Conexao.conectar();
@@ -28,20 +29,16 @@ public class TelaJogadores extends JFrame {
             return;
         }
 
-        // Painel principal
         JPanel painelPrincipal = new JPanel(new BorderLayout(10, 10));
         painelPrincipal.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        painelPrincipal.setBackground(EstiloUI.COR_FUNDO);
 
-        // Painel de formulário
         JPanel painelFormulario = criarPainelFormulario();
 
-        // Painel de tabela
         JPanel painelTabela = criarPainelTabela();
 
-        // Painel de botões
         JPanel painelBotoes = criarPainelBotoes();
 
-        // Adicionar ao painel principal
         painelPrincipal.add(painelFormulario, BorderLayout.NORTH);
         painelPrincipal.add(painelTabela, BorderLayout.CENTER);
         painelPrincipal.add(painelBotoes, BorderLayout.SOUTH);
@@ -54,18 +51,22 @@ public class TelaJogadores extends JFrame {
 
     private JPanel criarPainelFormulario() {
         JPanel painel = new JPanel(new GridLayout(1, 6, 10, 10));
-        painel.setBorder(BorderFactory.createTitledBorder("Formulário de Jogadores"));
+        painel.setBorder(EstiloUI.bordaSecao("Formulário de Jogadores"));
+        painel.setBackground(EstiloUI.COR_CARD);
 
         painel.add(new JLabel("Nickname:"));
         txtNickname = new JTextField();
+        EstiloUI.estilizarCampo(txtNickname);
         painel.add(txtNickname);
 
         painel.add(new JLabel("Email:"));
         txtEmail = new JTextField();
+        EstiloUI.estilizarCampo(txtEmail);
         painel.add(txtEmail);
 
         painel.add(new JLabel("Jogo:"));
         comboJogo = new JComboBox<>();
+        EstiloUI.estilizarCombo(comboJogo);
         painel.add(comboJogo);
 
         return painel;
@@ -73,12 +74,14 @@ public class TelaJogadores extends JFrame {
 
     private JPanel criarPainelTabela() {
         JPanel painel = new JPanel(new BorderLayout());
-        painel.setBorder(BorderFactory.createTitledBorder("Lista de Jogadores"));
+        painel.setBorder(EstiloUI.bordaSecao("Lista de Jogadores"));
+        painel.setBackground(EstiloUI.COR_CARD);
 
         String[] colunas = {"ID", "Nickname", "Email", "Jogo (ID)"};
         modeloTabela = new DefaultTableModel(colunas, 0);
         tabelaJogadores = new JTable(modeloTabela);
         tabelaJogadores.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        EstiloUI.estilizarTabela(tabelaJogadores);
 
         JScrollPane scrollPane = new JScrollPane(tabelaJogadores);
         painel.add(scrollPane, BorderLayout.CENTER);
@@ -88,6 +91,7 @@ public class TelaJogadores extends JFrame {
 
     private JPanel criarPainelBotoes() {
         JPanel painel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        painel.setBackground(EstiloUI.COR_FUNDO);
 
         btnNovo = new JButton("Novo");
         btnSalvar = new JButton("Salvar");
@@ -95,13 +99,18 @@ public class TelaJogadores extends JFrame {
         btnDeletar = new JButton("Deletar");
         btnBuscarTodos = new JButton("Buscar Todos");
 
+        EstiloUI.estilizarBotao(btnNovo, new Color(90, 103, 117));
+        EstiloUI.estilizarBotao(btnSalvar, new Color(43, 142, 95));
+        EstiloUI.estilizarBotao(btnEditar, new Color(27, 115, 173));
+        EstiloUI.estilizarBotao(btnDeletar, new Color(188, 72, 72));
+        EstiloUI.estilizarBotao(btnBuscarTodos, new Color(120, 96, 173));
+
         painel.add(btnNovo);
         painel.add(btnSalvar);
         painel.add(btnEditar);
         painel.add(btnDeletar);
         painel.add(btnBuscarTodos);
 
-        // Listeners
         btnNovo.addActionListener(e -> limparFormulario());
         btnSalvar.addActionListener(e -> salvarJogador());
         btnEditar.addActionListener(e -> editarJogador());
@@ -146,7 +155,7 @@ public class TelaJogadores extends JFrame {
                 return;
             }
 
-            boolean sucesso = ddl.Insert.inserirJogador(conexao, nickname, email, idJogo);
+            boolean sucesso = dml.Insert.inserirJogador(conexao, nickname, email, idJogo);
             if (sucesso) {
                 JOptionPane.showMessageDialog(this, "Jogador salvo com sucesso!");
                 limparFormulario();
