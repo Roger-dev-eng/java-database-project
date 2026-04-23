@@ -1,9 +1,16 @@
 package InterfaceSwing.telas;
 
+import app.model.Jogador;
+import app.model.Jogo;
+import app.repository.JogadorRepository;
+import app.repository.JogoRepository;
+import app.validation.ValidationException;
+import app.validation.Validator;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.List;
 
 public class TelaJogadores extends JFrame {
@@ -13,16 +20,36 @@ public class TelaJogadores extends JFrame {
     private JComboBox<String> comboJogo;
     private JButton btnNovo, btnSalvar, btnEditar, btnDeletar, btnBuscarTodos;
     private Connection conexao;
+    private JogadorRepository jogadorRepository;
+    private JogoRepository jogoRepository;
+    private List<Jogador> jogadoresTabela;
+    private JFrame telaAnterior;
 
     public TelaJogadores() {
+        this(null);
+    }
+
+    public TelaJogadores(JFrame telaAnterior) {
+        this.telaAnterior = telaAnterior;
         setTitle("Gerenciar Jogadores");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(900, 600);
         setLocationRelativeTo(null);
         EstiloUI.aplicarTemaJanela(this);
+        if (telaAnterior != null) {
+            addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosed(java.awt.event.WindowEvent e) {
+                    TelaJogadores.this.telaAnterior.setVisible(true);
+                }
+            });
+        }
 
         try {
             conexao = Conexao.conectar();
+            jogadorRepository = new JogadorRepository(conexao);
+            jogoRepository = new JogoRepository(conexao);
+            jogadoresTabela = new ArrayList<>();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao conectar ao banco: " + e.getMessage());
             dispose();
@@ -33,13 +60,31 @@ public class TelaJogadores extends JFrame {
         painelPrincipal.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         painelPrincipal.setBackground(EstiloUI.COR_FUNDO);
 
+        JPanel painelTopo = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        painelTopo.setBackground(EstiloUI.COR_FUNDO);
+        if (this.telaAnterior != null) {
+            JButton btnVoltar = new JButton("<- Voltar");
+            btnVoltar.setFont(new Font("Trebuchet MS", Font.PLAIN, 12));
+            btnVoltar.setForeground(new Color(190, 205, 220));
+            btnVoltar.setBackground(new Color(47, 55, 66));
+            btnVoltar.setFocusPainted(false);
+            btnVoltar.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
+            btnVoltar.addActionListener(e -> voltar());
+            painelTopo.add(btnVoltar);
+        }
+
         JPanel painelFormulario = criarPainelFormulario();
 
         JPanel painelTabela = criarPainelTabela();
 
         JPanel painelBotoes = criarPainelBotoes();
 
-        painelPrincipal.add(painelFormulario, BorderLayout.NORTH);
+        JPanel painelNorte = new JPanel(new BorderLayout(0, 8));
+        painelNorte.setBackground(EstiloUI.COR_FUNDO);
+        painelNorte.add(painelTopo, BorderLayout.NORTH);
+        painelNorte.add(painelFormulario, BorderLayout.CENTER);
+
+        painelPrincipal.add(painelNorte, BorderLayout.NORTH);
         painelPrincipal.add(painelTabela, BorderLayout.CENTER);
         painelPrincipal.add(painelBotoes, BorderLayout.SOUTH);
 
@@ -47,6 +92,13 @@ public class TelaJogadores extends JFrame {
         carregarJogos();
         carregarTabela();
         setVisible(true);
+    }
+
+    private void voltar() {
+        dispose();
+        if (telaAnterior != null) {
+            telaAnterior.setVisible(true);
+        }
     }
 
     private JPanel criarPainelFormulario() {
@@ -82,6 +134,11 @@ public class TelaJogadores extends JFrame {
         tabelaJogadores = new JTable(modeloTabela);
         tabelaJogadores.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         EstiloUI.estilizarTabela(tabelaJogadores);
+        tabelaJogadores.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                preencherFormularioComLinhaSelecionada();
+            }
+        });
 
         JScrollPane scrollPane = new JScrollPane(tabelaJogadores);
         painel.add(scrollPane, BorderLayout.CENTER);
@@ -122,9 +179,10 @@ public class TelaJogadores extends JFrame {
 
     private void carregarJogos() {
         try {
-            List<Object[]> jogos = dql.jogos.Selects.listarTodos(conexao);
-            for (Object[] jogo : jogos) {
-                comboJogo.addItem(jogo[0] + " - " + jogo[1]);
+            comboJogo.removeAllItems();
+            List<Jogo> jogos = jogoRepository.listarTodos();
+            for (Jogo jogo : jogos) {
+                comboJogo.addItem(jogo.getId() + " - " + jogo.getNome());
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar jogos: " + e.getMessage());
@@ -134,9 +192,14 @@ public class TelaJogadores extends JFrame {
     private void carregarTabela() {
         modeloTabela.setRowCount(0);
         try {
-            List<Object[]> jogadores = dql.jogadores.Selects.listarTodos(conexao);
-            for (Object[] jogador : jogadores) {
-                modeloTabela.addRow(jogador);
+            jogadoresTabela = jogadorRepository.listarTodos();
+            for (Jogador jogador : jogadoresTabela) {
+                modeloTabela.addRow(new Object[]{
+                        jogador.getId(),
+                        jogador.getNickname(),
+                        jogador.getEmail(),
+                        jogador.getIdJogo()
+                });
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar jogadores: " + e.getMessage());
@@ -145,17 +208,18 @@ public class TelaJogadores extends JFrame {
 
     private void salvarJogador() {
         try {
-            String nickname = txtNickname.getText();
-            String email = txtEmail.getText();
+            String nickname = Validator.requiredText(txtNickname.getText(), "Nickname");
+            String email = Validator.requiredText(txtEmail.getText(), "Email");
             String jogoSelecionado = (String) comboJogo.getSelectedItem();
-            Integer idJogo = Integer.parseInt(jogoSelecionado.split(" - ")[0]);
 
-            if (nickname.isEmpty() || email.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Preencha todos os campos!");
+            if (jogoSelecionado == null || jogoSelecionado.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Selecione um jogo!");
                 return;
             }
 
-            boolean sucesso = dml.Insert.inserirJogador(conexao, nickname, email, idJogo);
+            Integer idJogo = Integer.parseInt(jogoSelecionado.split(" - ")[0]);
+
+            boolean sucesso = jogadorRepository.inserir(new Jogador(null, nickname, email, idJogo));
             if (sucesso) {
                 JOptionPane.showMessageDialog(this, "Jogador salvo com sucesso!");
                 limparFormulario();
@@ -163,6 +227,8 @@ public class TelaJogadores extends JFrame {
             } else {
                 JOptionPane.showMessageDialog(this, "Erro ao salvar jogador!");
             }
+        } catch (ValidationException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
         }
@@ -176,13 +242,26 @@ public class TelaJogadores extends JFrame {
         }
 
         try {
-            Integer idJogador = (Integer) modeloTabela.getValueAt(linha, 0);
-            String nickname = txtNickname.getText();
-            String email = txtEmail.getText();
+            Jogador atual = jogadoresTabela.get(linha);
+            String nickname = Validator.normalize(txtNickname.getText());
+            String email = Validator.normalize(txtEmail.getText());
             String jogoSelecionado = (String) comboJogo.getSelectedItem();
-            Integer idJogo = Integer.parseInt(jogoSelecionado.split(" - ")[0]);
 
-            boolean sucesso = dml.Update.atualizarJogador(conexao, idJogador, nickname, email, idJogo);
+            Integer idJogo;
+            if (jogoSelecionado == null || jogoSelecionado.trim().isEmpty()) {
+                idJogo = atual.getIdJogo();
+            } else {
+                idJogo = Integer.parseInt(jogoSelecionado.split(" - ")[0]);
+            }
+
+            Jogador jogador = new Jogador(
+                    atual.getId(),
+                    nickname.isEmpty() ? atual.getNickname() : nickname,
+                    email.isEmpty() ? atual.getEmail() : email,
+                    idJogo
+            );
+
+            boolean sucesso = jogadorRepository.atualizar(jogador);
             if (sucesso) {
                 JOptionPane.showMessageDialog(this, "Jogador atualizado com sucesso!");
                 limparFormulario();
@@ -203,11 +282,11 @@ public class TelaJogadores extends JFrame {
         }
 
         try {
-            Integer idJogador = (Integer) modeloTabela.getValueAt(linha, 0);
+            Integer idJogador = jogadoresTabela.get(linha).getId();
             int opcao = JOptionPane.showConfirmDialog(this, "Tem certeza que deseja deletar?");
 
             if (opcao == JOptionPane.YES_OPTION) {
-                boolean sucesso = dml.Delete.deletarJogador(conexao, idJogador);
+                boolean sucesso = jogadorRepository.deletar(idJogador);
                 if (sucesso) {
                     JOptionPane.showMessageDialog(this, "Jogador deletado com sucesso!");
                     carregarTabela();
@@ -223,5 +302,27 @@ public class TelaJogadores extends JFrame {
     private void limparFormulario() {
         txtNickname.setText("");
         txtEmail.setText("");
+    }
+
+    private void preencherFormularioComLinhaSelecionada() {
+        int linha = tabelaJogadores.getSelectedRow();
+        if (linha < 0) {
+            return;
+        }
+
+        txtNickname.setText(String.valueOf(modeloTabela.getValueAt(linha, 1)));
+        txtEmail.setText(String.valueOf(modeloTabela.getValueAt(linha, 2)));
+
+        Object idJogoObj = modeloTabela.getValueAt(linha, 3);
+        if (idJogoObj != null) {
+            String idJogo = String.valueOf(idJogoObj);
+            for (int i = 0; i < comboJogo.getItemCount(); i++) {
+                String item = comboJogo.getItemAt(i);
+                if (item.startsWith(idJogo + " - ")) {
+                    comboJogo.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
     }
 }

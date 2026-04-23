@@ -1,10 +1,19 @@
 package InterfaceSwing.telas;
 
+import app.model.Avaliacao;
+import app.model.Jogador;
+import app.model.Jogo;
+import app.repository.AvaliacaoRepository;
+import app.repository.JogadorRepository;
+import app.repository.JogoRepository;
+import app.validation.ValidationException;
+import app.validation.Validator;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 public class TelaAvaliacoes extends JFrame {
@@ -15,16 +24,38 @@ public class TelaAvaliacoes extends JFrame {
     private JComboBox<String> comboJogador, comboJogo, comboStatus;
     private JButton btnNovo, btnSalvar, btnEditar, btnDeletar, btnBuscarTodos;
     private Connection conexao;
+    private AvaliacaoRepository avaliacaoRepository;
+    private JogadorRepository jogadorRepository;
+    private JogoRepository jogoRepository;
+    private List<Avaliacao> avaliacoesTabela;
+    private JFrame telaAnterior;
 
     public TelaAvaliacoes() {
+        this(null);
+    }
+
+    public TelaAvaliacoes(JFrame telaAnterior) {
+        this.telaAnterior = telaAnterior;
         setTitle("Gerenciar Avaliações");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(1000, 650);
         setLocationRelativeTo(null);
         EstiloUI.aplicarTemaJanela(this);
+        if (telaAnterior != null) {
+            addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosed(java.awt.event.WindowEvent e) {
+                    TelaAvaliacoes.this.telaAnterior.setVisible(true);
+                }
+            });
+        }
 
         try {
             conexao = Conexao.conectar();
+            avaliacaoRepository = new AvaliacaoRepository(conexao);
+            jogadorRepository = new JogadorRepository(conexao);
+            jogoRepository = new JogoRepository(conexao);
+            avaliacoesTabela = new ArrayList<>();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao conectar ao banco: " + e.getMessage());
             dispose();
@@ -35,13 +66,31 @@ public class TelaAvaliacoes extends JFrame {
         painelPrincipal.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         painelPrincipal.setBackground(EstiloUI.COR_FUNDO);
 
+        JPanel painelTopo = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        painelTopo.setBackground(EstiloUI.COR_FUNDO);
+        if (this.telaAnterior != null) {
+            JButton btnVoltar = new JButton("<- Voltar");
+            btnVoltar.setFont(new Font("Trebuchet MS", Font.PLAIN, 12));
+            btnVoltar.setForeground(new Color(190, 205, 220));
+            btnVoltar.setBackground(new Color(47, 55, 66));
+            btnVoltar.setFocusPainted(false);
+            btnVoltar.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
+            btnVoltar.addActionListener(e -> voltar());
+            painelTopo.add(btnVoltar);
+        }
+
         JPanel painelFormulario = criarPainelFormulario();
 
         JPanel painelTabela = criarPainelTabela();
 
         JPanel painelBotoes = criarPainelBotoes();
 
-        painelPrincipal.add(painelFormulario, BorderLayout.NORTH);
+        JPanel painelNorte = new JPanel(new BorderLayout(0, 8));
+        painelNorte.setBackground(EstiloUI.COR_FUNDO);
+        painelNorte.add(painelTopo, BorderLayout.NORTH);
+        painelNorte.add(painelFormulario, BorderLayout.CENTER);
+
+        painelPrincipal.add(painelNorte, BorderLayout.NORTH);
         painelPrincipal.add(painelTabela, BorderLayout.CENTER);
         painelPrincipal.add(painelBotoes, BorderLayout.SOUTH);
 
@@ -52,45 +101,69 @@ public class TelaAvaliacoes extends JFrame {
         setVisible(true);
     }
 
+    private void voltar() {
+        dispose();
+        if (telaAnterior != null) {
+            telaAnterior.setVisible(true);
+        }
+    }
+
     private JPanel criarPainelFormulario() {
-        JPanel painel = new JPanel(new GridLayout(3, 4, 10, 10));
+        JPanel painel = new JPanel();
+        painel.setLayout(new BoxLayout(painel, BoxLayout.Y_AXIS));
         painel.setBorder(EstiloUI.bordaSecao("Formulário de Avaliações"));
         painel.setBackground(EstiloUI.COR_CARD);
 
-        painel.add(new JLabel("Jogador:"));
+        JPanel linha1 = new JPanel(new GridLayout(1, 6, 10, 10));
+        linha1.setBackground(EstiloUI.COR_CARD);
+
+        linha1.add(new JLabel("Jogador:"));
         comboJogador = new JComboBox<>();
         EstiloUI.estilizarCombo(comboJogador);
-        painel.add(comboJogador);
+        linha1.add(comboJogador);
 
-        painel.add(new JLabel("Jogo:"));
+        linha1.add(new JLabel("Jogo:"));
         comboJogo = new JComboBox<>();
         EstiloUI.estilizarCombo(comboJogo);
-        painel.add(comboJogo);
+        linha1.add(comboJogo);
 
-        painel.add(new JLabel("Nota (0-10):"));
+        linha1.add(new JLabel("Nota (0-10):"));
         txtNota = new JTextField();
         EstiloUI.estilizarCampo(txtNota);
-        painel.add(txtNota);
+        linha1.add(txtNota);
 
-        painel.add(new JLabel("Status:"));
+        JPanel linha2 = new JPanel(new GridLayout(1, 4, 10, 10));
+        linha2.setBackground(EstiloUI.COR_CARD);
+
+        linha2.add(new JLabel("Status:"));
         comboStatus = new JComboBox<>(new String[]{"Pendente", "Completa", "Revisada"});
         EstiloUI.estilizarCombo(comboStatus);
-        painel.add(comboStatus);
+        linha2.add(comboStatus);
 
-        painel.add(new JLabel("Data (yyyy-MM-dd):"));
+        linha2.add(new JLabel("Data (yyyy-MM-dd):"));
         txtData = new JTextField();
         EstiloUI.estilizarCampo(txtData);
-        painel.add(txtData);
+        linha2.add(txtData);
 
-        painel.add(new JLabel(""));
+        JPanel linha3 = new JPanel(new BorderLayout(0, 6));
+        linha3.setBackground(EstiloUI.COR_CARD);
 
-        painel.add(new JLabel("Comentário:"));
+        JLabel lblComentario = new JLabel("Comentário:");
         txtComentario = new JTextArea(2, 30);
         EstiloUI.estilizarArea(txtComentario);
         txtComentario.setLineWrap(true);
         txtComentario.setWrapStyleWord(true);
         JScrollPane scrollComentario = new JScrollPane(txtComentario);
-        painel.add(scrollComentario);
+        scrollComentario.setPreferredSize(new Dimension(0, 70));
+
+        linha3.add(lblComentario, BorderLayout.NORTH);
+        linha3.add(scrollComentario, BorderLayout.CENTER);
+
+        painel.add(linha1);
+        painel.add(Box.createVerticalStrut(8));
+        painel.add(linha2);
+        painel.add(Box.createVerticalStrut(8));
+        painel.add(linha3);
 
         return painel;
     }
@@ -105,6 +178,11 @@ public class TelaAvaliacoes extends JFrame {
         tabelaAvaliacoes = new JTable(modeloTabela);
         tabelaAvaliacoes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         EstiloUI.estilizarTabela(tabelaAvaliacoes);
+        tabelaAvaliacoes.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                preencherFormularioComLinhaSelecionada();
+            }
+        });
 
         JScrollPane scrollPane = new JScrollPane(tabelaAvaliacoes);
         painel.add(scrollPane, BorderLayout.CENTER);
@@ -145,9 +223,10 @@ public class TelaAvaliacoes extends JFrame {
 
     private void carregarJogadores() {
         try {
-            List<Object[]> jogadores = dql.jogadores.Selects.listarTodos(conexao);
-            for (Object[] jogador : jogadores) {
-                comboJogador.addItem(jogador[0] + " - " + jogador[1]);
+            comboJogador.removeAllItems();
+            List<Jogador> jogadores = jogadorRepository.listarTodos();
+            for (Jogador jogador : jogadores) {
+                comboJogador.addItem(jogador.getId() + " - " + jogador.getNickname());
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar jogadores: " + e.getMessage());
@@ -156,9 +235,10 @@ public class TelaAvaliacoes extends JFrame {
 
     private void carregarJogos() {
         try {
-            List<Object[]> jogos = dql.jogos.Selects.listarTodos(conexao);
-            for (Object[] jogo : jogos) {
-                comboJogo.addItem(jogo[0] + " - " + jogo[1]);
+            comboJogo.removeAllItems();
+            List<Jogo> jogos = jogoRepository.listarTodos();
+            for (Jogo jogo : jogos) {
+                comboJogo.addItem(jogo.getId() + " - " + jogo.getNome());
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar jogos: " + e.getMessage());
@@ -168,9 +248,17 @@ public class TelaAvaliacoes extends JFrame {
     private void carregarTabela() {
         modeloTabela.setRowCount(0);
         try {
-            List<Object[]> avaliacoes = dql.avaliacoes.Selects.listarTodas(conexao);
-            for (Object[] avaliacao : avaliacoes) {
-                modeloTabela.addRow(avaliacao);
+            avaliacoesTabela = avaliacaoRepository.listarTodas();
+            for (Avaliacao avaliacao : avaliacoesTabela) {
+                modeloTabela.addRow(new Object[]{
+                        avaliacao.getId(),
+                        avaliacao.getNota(),
+                        avaliacao.getComentario(),
+                        avaliacao.getStatus(),
+                        avaliacao.getDataAvaliacao(),
+                        avaliacao.getIdJogador(),
+                        avaliacao.getIdJogo()
+                });
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar avaliações: " + e.getMessage());
@@ -179,29 +267,33 @@ public class TelaAvaliacoes extends JFrame {
 
     private void salvarAvaliacao() {
         try {
-            String notaStr = txtNota.getText();
-            String comentario = txtComentario.getText();
+            Integer nota = Validator.requiredInt(txtNota.getText(), "Nota");
+            Validator.rangeInclusive(nota, 0, 10, "Nota");
+            String comentario = Validator.normalize(txtComentario.getText());
             String status = (String) comboStatus.getSelectedItem();
-            String data = txtData.getText();
+            Date dataAvaliacao = Validator.requiredDate(txtData.getText(), "Data");
             String jogadorSelecionado = (String) comboJogador.getSelectedItem();
             String jogoSelecionado = (String) comboJogo.getSelectedItem();
 
-            if (notaStr.isEmpty() || status == null || data.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Preencha todos os campos obrigatórios!");
+            if (status == null || status.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Selecione um status!");
                 return;
             }
 
-            Integer nota = Integer.parseInt(notaStr);
+            if (jogadorSelecionado == null || jogadorSelecionado.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Selecione um jogador!");
+                return;
+            }
+
+            if (jogoSelecionado == null || jogoSelecionado.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Selecione um jogo!");
+                return;
+            }
+
             Integer idJogador = Integer.parseInt(jogadorSelecionado.split(" - ")[0]);
             Integer idJogo = Integer.parseInt(jogoSelecionado.split(" - ")[0]);
-            Date dataAvaliacao = Date.valueOf(data);
 
-            if (nota < 0 || nota > 10) {
-                JOptionPane.showMessageDialog(this, "Nota deve estar entre 0 e 10!");
-                return;
-            }
-
-            boolean sucesso = dml.Insert.inserirAvaliacao(conexao, nota, comentario, status, dataAvaliacao, idJogador, idJogo);
+            boolean sucesso = avaliacaoRepository.inserir(new Avaliacao(null, nota, comentario, status, dataAvaliacao, idJogador, idJogo));
             if (sucesso) {
                 JOptionPane.showMessageDialog(this, "Avaliação salva com sucesso!");
                 limparFormulario();
@@ -209,10 +301,8 @@ public class TelaAvaliacoes extends JFrame {
             } else {
                 JOptionPane.showMessageDialog(this, "Erro ao salvar avaliação!");
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Nota deve ser um numero entre 0 e 10!");
-        } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this, "Data invalida! Use o formato yyyy-MM-dd.");
+        } catch (ValidationException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
         }
@@ -226,25 +316,43 @@ public class TelaAvaliacoes extends JFrame {
         }
 
         try {
-            Integer idAvaliacao = (Integer) modeloTabela.getValueAt(linha, 0);
-            String notaStr = txtNota.getText();
-            String comentario = txtComentario.getText();
+            Avaliacao atual = avaliacoesTabela.get(linha);
+            String notaStr = Validator.normalize(txtNota.getText());
+            String comentario = Validator.normalize(txtComentario.getText());
             String status = (String) comboStatus.getSelectedItem();
-            String data = txtData.getText();
+            String data = Validator.normalize(txtData.getText());
             String jogadorSelecionado = (String) comboJogador.getSelectedItem();
             String jogoSelecionado = (String) comboJogo.getSelectedItem();
 
-            Integer nota = Integer.parseInt(notaStr);
-            Integer idJogador = Integer.parseInt(jogadorSelecionado.split(" - ")[0]);
-            Integer idJogo = Integer.parseInt(jogoSelecionado.split(" - ")[0]);
-            Date dataAvaliacao = Date.valueOf(data);
-
-            if (nota < 0 || nota > 10) {
-                JOptionPane.showMessageDialog(this, "Nota deve estar entre 0 e 10!");
-                return;
+            if (jogadorSelecionado == null || jogadorSelecionado.trim().isEmpty()) {
+                jogadorSelecionado = atual.getIdJogador() + "";
             }
 
-            boolean sucesso = dml.Update.atualizarAvaliacao(conexao, idAvaliacao, nota, comentario, status, dataAvaliacao, idJogador, idJogo);
+            if (jogoSelecionado == null || jogoSelecionado.trim().isEmpty()) {
+                jogoSelecionado = atual.getIdJogo() + "";
+            }
+
+            Integer nota = notaStr.isEmpty() ? atual.getNota() : Validator.requiredInt(notaStr, "Nota");
+            Validator.rangeInclusive(nota, 0, 10, "Nota");
+            Date dataAvaliacao = data.isEmpty() ? atual.getDataAvaliacao() : Validator.requiredDate(data, "Data");
+            Integer idJogador = jogadorSelecionado.contains(" - ")
+                    ? Integer.parseInt(jogadorSelecionado.split(" - ")[0])
+                    : Integer.parseInt(jogadorSelecionado);
+            Integer idJogo = jogoSelecionado.contains(" - ")
+                    ? Integer.parseInt(jogoSelecionado.split(" - ")[0])
+                    : Integer.parseInt(jogoSelecionado);
+
+            Avaliacao avaliacao = new Avaliacao(
+                    atual.getId(),
+                    nota,
+                    comentario.isEmpty() ? atual.getComentario() : comentario,
+                    status == null || status.trim().isEmpty() ? atual.getStatus() : status,
+                    dataAvaliacao,
+                    idJogador,
+                    idJogo
+            );
+
+            boolean sucesso = avaliacaoRepository.atualizar(avaliacao);
             if (sucesso) {
                 JOptionPane.showMessageDialog(this, "Avaliação atualizada com sucesso!");
                 limparFormulario();
@@ -252,6 +360,8 @@ public class TelaAvaliacoes extends JFrame {
             } else {
                 JOptionPane.showMessageDialog(this, "Erro ao atualizar avaliação!");
             }
+        } catch (ValidationException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
         }
@@ -265,11 +375,11 @@ public class TelaAvaliacoes extends JFrame {
         }
 
         try {
-            Integer idAvaliacao = (Integer) modeloTabela.getValueAt(linha, 0);
+            Integer idAvaliacao = avaliacoesTabela.get(linha).getId();
             int opcao = JOptionPane.showConfirmDialog(this, "Tem certeza que deseja deletar?");
 
             if (opcao == JOptionPane.YES_OPTION) {
-                boolean sucesso = dml.Delete.deletarAvaliacao(conexao, idAvaliacao);
+                boolean sucesso = avaliacaoRepository.deletar(idAvaliacao);
                 if (sucesso) {
                     JOptionPane.showMessageDialog(this, "Avaliação deletada com sucesso!");
                     carregarTabela();
@@ -289,5 +399,43 @@ public class TelaAvaliacoes extends JFrame {
         if (comboJogador.getItemCount() > 0) comboJogador.setSelectedIndex(0);
         if (comboJogo.getItemCount() > 0) comboJogo.setSelectedIndex(0);
         if (comboStatus.getItemCount() > 0) comboStatus.setSelectedIndex(0);
+    }
+
+    private void preencherFormularioComLinhaSelecionada() {
+        int linha = tabelaAvaliacoes.getSelectedRow();
+        if (linha < 0) {
+            return;
+        }
+
+        txtNota.setText(String.valueOf(modeloTabela.getValueAt(linha, 1)));
+        txtComentario.setText(String.valueOf(modeloTabela.getValueAt(linha, 2)));
+        comboStatus.setSelectedItem(String.valueOf(modeloTabela.getValueAt(linha, 3)));
+
+        Object dataObj = modeloTabela.getValueAt(linha, 4);
+        txtData.setText(dataObj == null ? "" : String.valueOf(dataObj));
+
+        Object idJogadorObj = modeloTabela.getValueAt(linha, 5);
+        if (idJogadorObj != null) {
+            String idJogador = String.valueOf(idJogadorObj);
+            for (int i = 0; i < comboJogador.getItemCount(); i++) {
+                String item = comboJogador.getItemAt(i);
+                if (item.startsWith(idJogador + " - ")) {
+                    comboJogador.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+
+        Object idJogoObj = modeloTabela.getValueAt(linha, 6);
+        if (idJogoObj != null) {
+            String idJogo = String.valueOf(idJogoObj);
+            for (int i = 0; i < comboJogo.getItemCount(); i++) {
+                String item = comboJogo.getItemAt(i);
+                if (item.startsWith(idJogo + " - ")) {
+                    comboJogo.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
     }
 }

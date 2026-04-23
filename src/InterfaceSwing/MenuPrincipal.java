@@ -12,7 +12,7 @@ import InterfaceSwing.telas.TelaVerTabelas;
 import java.awt.*;
 
 public class MenuPrincipal extends JFrame {
-    private static final Dimension TAM_BOTAO_MENU = new Dimension(150, 38);
+    private static final Dimension TAM_BOTAO_MENU = new Dimension(175, 44);
     private static final Dimension TAM_BOTAO_SAIR = new Dimension(80, 32);
     private JPanel painelPrincipal;
     private JButton btnJogos;
@@ -25,14 +25,14 @@ public class MenuPrincipal extends JFrame {
     public MenuPrincipal() {
         setTitle("Sistema de Gerenciamento de Jogos");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(700, 430);
+        setSize(620, 360);
         setLocationRelativeTo(null);
         setResizable(false);
         EstiloUI.aplicarTemaJanela(this);
 
         painelPrincipal = new JPanel();
-        painelPrincipal.setLayout(new BorderLayout(8, 8));
-        painelPrincipal.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
+        painelPrincipal.setLayout(new BorderLayout(6, 6));
+        painelPrincipal.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         painelPrincipal.setBackground(EstiloUI.COR_FUNDO);
 
         JPanel painelTitulo = new JPanel();
@@ -42,14 +42,16 @@ public class MenuPrincipal extends JFrame {
         lblTitulo.setFont(EstiloUI.FONTE_TITULO);
         painelTitulo.add(lblTitulo);
 
-        JPanel painelBotoes = new JPanel(new BorderLayout(0, 8));
+        JPanel painelBotoes = new JPanel();
+        painelBotoes.setLayout(new BoxLayout(painelBotoes, BoxLayout.Y_AXIS));
         painelBotoes.setBackground(EstiloUI.COR_FUNDO);
 
-        JPanel painelGrade = new JPanel(new GridLayout(2, 2, 8, 8));
-        painelGrade.setBackground(EstiloUI.COR_FUNDO);
-
-        JPanel painelCentralizado = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        painelCentralizado.setBackground(EstiloUI.COR_FUNDO);
+        JPanel linha1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
+        linha1.setBackground(EstiloUI.COR_FUNDO);
+        JPanel linha2 = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
+        linha2.setBackground(EstiloUI.COR_FUNDO);
+        JPanel linha3 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        linha3.setBackground(EstiloUI.COR_FUNDO);
 
         btnJogos = criarBotao("Jogos", new Color(24, 91, 168));
         btnJogadores = criarBotao("Jogadores", new Color(30, 101, 183));
@@ -57,14 +59,20 @@ public class MenuPrincipal extends JFrame {
         btnAvaliacoes = criarBotao("Avaliacoes", new Color(45, 124, 204));
         btnVerTabelas = criarBotao("Ver Tabelas", new Color(20, 82, 153));
 
-        painelGrade.add(criarPainelBotao(btnJogos));
-        painelGrade.add(criarPainelBotao(btnJogadores));
-        painelGrade.add(criarPainelBotao(btnPlataformas));
-        painelGrade.add(criarPainelBotao(btnAvaliacoes));
-        painelCentralizado.add(btnVerTabelas);
+        linha1.add(btnJogos);
+        linha1.add(btnJogadores);
+        linha2.add(btnPlataformas);
+        linha2.add(btnAvaliacoes);
+        linha3.add(btnVerTabelas);
+        painelBotoes.add(linha1);
+        painelBotoes.add(Box.createVerticalStrut(6));
+        painelBotoes.add(linha2);
+        painelBotoes.add(Box.createVerticalStrut(6));
+        painelBotoes.add(linha3);
 
-        painelBotoes.add(painelGrade, BorderLayout.CENTER);
-        painelBotoes.add(painelCentralizado, BorderLayout.SOUTH);
+        JPanel painelCentro = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        painelCentro.setBackground(EstiloUI.COR_FUNDO);
+        painelCentro.add(painelBotoes);
 
         JPanel painelRodape = new JPanel();
         painelRodape.setBackground(EstiloUI.COR_FUNDO);
@@ -78,7 +86,7 @@ public class MenuPrincipal extends JFrame {
         painelRodape.add(btnSair);
 
         painelPrincipal.add(painelTitulo, BorderLayout.NORTH);
-        painelPrincipal.add(painelBotoes, BorderLayout.CENTER);
+        painelPrincipal.add(painelCentro, BorderLayout.CENTER);
         painelPrincipal.add(painelRodape, BorderLayout.SOUTH);
 
         add(painelPrincipal);
@@ -101,31 +109,29 @@ public class MenuPrincipal extends JFrame {
         return botao;
     }
 
-    private JPanel criarPainelBotao(JButton botao) {
-        JPanel painel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        painel.setBackground(EstiloUI.COR_FUNDO);
-        painel.add(botao);
-        return painel;
-    }
-
     private void abrirTelaJogos() {
-        new TelaJogos();
+        setVisible(false);
+        new TelaJogos(this);
     }
 
     private void abrirTelaJogadores() {
-        new TelaJogadores();
+        setVisible(false);
+        new TelaJogadores(this);
     }
 
     private void abrirTelaPlataformas() {
-        new TelaPlataformas();
+        setVisible(false);
+        new TelaPlataformas(this);
     }
 
     private void abrirTelaAvaliacoes() {
-        new TelaAvaliacoes();
+        setVisible(false);
+        new TelaAvaliacoes(this);
     }
 
     private void abrirTelaVerTabelas() {
-        new TelaVerTabelas();
+        setVisible(false);
+        new TelaVerTabelas(this);
     }
 
     public static void main(String[] args) {

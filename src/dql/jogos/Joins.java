@@ -10,7 +10,7 @@ import java.util.List;
 public class Joins {
 
     // INNER JOIN com jogadores
-    public static List<Object[]> jogaresComJogos(Connection conexao) throws SQLException {
+    public static List<Object[]> jogadoresComJogos(Connection conexao) throws SQLException {
         List<Object[]> resultados = new ArrayList<>();
         String sql = "SELECT j.id_jogo, j.nome, j.genero, jg.id_jogador, jg.nickname FROM jogos j INNER JOIN jogadores jg ON j.id_jogo = jg.fk_jogo";
         
