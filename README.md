@@ -1,4 +1,4 @@
-# Sistema de Gerenciamento de Banco de Dados de Jogos
+# Sistema de Gerenciamento de Banco de Dados sobre Jogos
 
 Aplicação desktop em Java, Swing e PostgreSQL para gerenciamento de jogos, jogadores, plataformas e avaliações.
 
