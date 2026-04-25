@@ -18,6 +18,7 @@ public class TelaVerTabelas extends JFrame {
     private Connection conexao;
     private ConsultaService consultaService;
     private JFrame telaAnterior;
+    private boolean voltarParaAnterior;
 
     public TelaVerTabelas() {
         this(null);
@@ -35,7 +36,11 @@ public class TelaVerTabelas extends JFrame {
             public void windowClosed(java.awt.event.WindowEvent e) {
                 fecharConexao();
                 if (TelaVerTabelas.this.telaAnterior != null) {
-                    TelaVerTabelas.this.telaAnterior.setVisible(true);
+                    if (voltarParaAnterior) {
+                        TelaVerTabelas.this.telaAnterior.setVisible(true);
+                    } else {
+                        TelaVerTabelas.this.telaAnterior.dispose();
+                    }
                 }
             }
         });
@@ -121,10 +126,8 @@ public class TelaVerTabelas extends JFrame {
     }
 
     private void voltar() {
+        voltarParaAnterior = true;
         dispose();
-        if (telaAnterior != null) {
-            telaAnterior.setVisible(true);
-        }
     }
 
     private void atualizarConsultasDisponiveis() {

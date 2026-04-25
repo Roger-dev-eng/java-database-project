@@ -25,6 +25,7 @@ public class TelaPlataformas extends JFrame {
     private JogadorRepository jogadorRepository;
     private List<Plataforma> plataformasTabela;
     private JFrame telaAnterior;
+    private boolean voltarParaAnterior;
 
     public TelaPlataformas() {
         this(null);
@@ -42,7 +43,11 @@ public class TelaPlataformas extends JFrame {
             public void windowClosed(java.awt.event.WindowEvent e) {
                 fecharConexao();
                 if (TelaPlataformas.this.telaAnterior != null) {
-                    TelaPlataformas.this.telaAnterior.setVisible(true);
+                    if (voltarParaAnterior) {
+                        TelaPlataformas.this.telaAnterior.setVisible(true);
+                    } else {
+                        TelaPlataformas.this.telaAnterior.dispose();
+                    }
                 }
             }
         });
@@ -97,10 +102,8 @@ public class TelaPlataformas extends JFrame {
     }
 
     private void voltar() {
+        voltarParaAnterior = true;
         dispose();
-        if (telaAnterior != null) {
-            telaAnterior.setVisible(true);
-        }
     }
 
     private JPanel criarPainelFormulario() {

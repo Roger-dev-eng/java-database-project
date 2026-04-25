@@ -30,6 +30,7 @@ public class TelaAvaliacoes extends JFrame {
     private JogoRepository jogoRepository;
     private List<Avaliacao> avaliacoesTabela;
     private JFrame telaAnterior;
+    private boolean voltarParaAnterior;
 
     public TelaAvaliacoes() {
         this(null);
@@ -47,7 +48,11 @@ public class TelaAvaliacoes extends JFrame {
             public void windowClosed(java.awt.event.WindowEvent e) {
                 fecharConexao();
                 if (TelaAvaliacoes.this.telaAnterior != null) {
-                    TelaAvaliacoes.this.telaAnterior.setVisible(true);
+                    if (voltarParaAnterior) {
+                        TelaAvaliacoes.this.telaAnterior.setVisible(true);
+                    } else {
+                        TelaAvaliacoes.this.telaAnterior.dispose();
+                    }
                 }
             }
         });
@@ -104,10 +109,8 @@ public class TelaAvaliacoes extends JFrame {
     }
 
     private void voltar() {
+        voltarParaAnterior = true;
         dispose();
-        if (telaAnterior != null) {
-            telaAnterior.setVisible(true);
-        }
     }
 
     private JPanel criarPainelFormulario() {

@@ -25,6 +25,7 @@ public class TelaJogadores extends JFrame {
     private JogoRepository jogoRepository;
     private List<Jogador> jogadoresTabela;
     private JFrame telaAnterior;
+    private boolean voltarParaAnterior;
 
     public TelaJogadores() {
         this(null);
@@ -42,7 +43,11 @@ public class TelaJogadores extends JFrame {
             public void windowClosed(java.awt.event.WindowEvent e) {
                 fecharConexao();
                 if (TelaJogadores.this.telaAnterior != null) {
-                    TelaJogadores.this.telaAnterior.setVisible(true);
+                    if (voltarParaAnterior) {
+                        TelaJogadores.this.telaAnterior.setVisible(true);
+                    } else {
+                        TelaJogadores.this.telaAnterior.dispose();
+                    }
                 }
             }
         });
@@ -97,10 +102,8 @@ public class TelaJogadores extends JFrame {
     }
 
     private void voltar() {
+        voltarParaAnterior = true;
         dispose();
-        if (telaAnterior != null) {
-            telaAnterior.setVisible(true);
-        }
     }
 
     private JPanel criarPainelFormulario() {

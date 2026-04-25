@@ -5,11 +5,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TelaBoasVindas extends JFrame {
-    private final String nomeUsuario;
-
     public TelaBoasVindas(String nomeUsuario) {
-        this.nomeUsuario = nomeUsuario;
-
         setTitle("Bem-vindo");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(520, 300);
