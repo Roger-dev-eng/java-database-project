@@ -33,6 +33,8 @@ O sistema oferece:
 - CRUD de avaliações
 - tela de consultas com listagens, filtros, joins e agregações
 
+<img width="753" height="448" alt="Image" src="https://github.com/user-attachments/assets/7427ab1d-7cda-4851-b842-12e6c29548b7" />
+
 ## Stack
 
 - Java
@@ -171,10 +173,24 @@ Essa classe delega a inicialização para a interface principal em `InterfaceSwi
 ## Fluxo da aplicação
 
 1. O usuário acessa a tela de login.
+
+<img width="579" height="339" alt="Image" src="https://github.com/user-attachments/assets/c3c14183-4427-4fa6-a5f2-0ce72a47ef9a" />
+
 2. A aplicação exibe a tela de boas-vindas.
+
+<img width="623" height="368" alt="Image" src="https://github.com/user-attachments/assets/6b7765d7-7b06-44d0-ad28-d3d9d51c2c44" />
+
 3. O menu principal libera acesso aos módulos.
+
+<img width="753" height="448" alt="Image" src="https://github.com/user-attachments/assets/7427ab1d-7cda-4851-b842-12e6c29548b7" />
+
 4. Cada tela operacional realiza consultas e operações CRUD no banco.
+
+<img width="1094" height="732" alt="Image" src="https://github.com/user-attachments/assets/c8c315be-7db3-4c82-ab19-9326c48690aa" />
+
 5. A tela "Ver Tabelas" permite executar consultas simples e avançadas.
+
+<img width="1195" height="745" alt="Image" src="https://github.com/user-attachments/assets/7edc9253-f030-4012-b052-1ce4bd87fcfc" />
 
 ## Consultas disponíveis
 
@@ -184,6 +200,8 @@ Na tela `TelaVerTabelas`, o usuário pode alternar entre quatro modos:
 - `Filtros`: filtros por campos específicos
 - `Joins`: cruzamento de dados entre tabelas relacionadas
 - `Agregacoes`: totais, médias e outras métricas
+
+<img width="1196" height="755" alt="Image" src="https://github.com/user-attachments/assets/243d22a3-de94-4759-bf3a-50730cc960b2" />
 
 ## Validações implementadas
 
