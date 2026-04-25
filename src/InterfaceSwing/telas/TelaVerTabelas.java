@@ -6,6 +6,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 public class TelaVerTabelas extends JFrame {
@@ -29,14 +30,15 @@ public class TelaVerTabelas extends JFrame {
         setSize(980, 620);
         setLocationRelativeTo(null);
         EstiloUI.aplicarTemaJanela(this);
-        if (telaAnterior != null) {
-            addWindowListener(new java.awt.event.WindowAdapter() {
-                @Override
-                public void windowClosed(java.awt.event.WindowEvent e) {
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                fecharConexao();
+                if (TelaVerTabelas.this.telaAnterior != null) {
                     TelaVerTabelas.this.telaAnterior.setVisible(true);
                 }
-            });
-        }
+            }
+        });
 
         try {
             conexao = Conexao.conectar();
@@ -270,6 +272,19 @@ public class TelaVerTabelas extends JFrame {
         modeloTabela.setDataVector(new Object[0][0], colunas);
         for (Object[] linha : dados) {
             modeloTabela.addRow(linha);
+        }
+    }
+
+    private void fecharConexao() {
+        if (conexao == null) {
+            return;
+        }
+        try {
+            if (!conexao.isClosed()) {
+                conexao.close();
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao fechar conexao de consultas: " + e.getMessage());
         }
     }
 

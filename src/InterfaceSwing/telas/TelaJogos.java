@@ -8,6 +8,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class TelaJogos extends JFrame {
     private JTable tabelaJogos;
     private DefaultTableModel modeloTabela;
     private JTextField txtNome, txtAno, txtDesenvolvedora, txtGenero;
-    private JButton btnNovo, btnSalvar, btnEditar, btnDeletar, btnBuscarTodos, btnFiltrarGenero;
+    private JButton btnNovo, btnSalvar, btnEditar, btnDeletar;
     private Connection conexao;
     private JogoRepository jogoRepository;
     private List<Jogo> jogosTabela;
@@ -32,14 +33,15 @@ public class TelaJogos extends JFrame {
         setSize(900, 600);
         setLocationRelativeTo(null);
         EstiloUI.aplicarTemaJanela(this);
-        if (telaAnterior != null) {
-            addWindowListener(new java.awt.event.WindowAdapter() {
-                @Override
-                public void windowClosed(java.awt.event.WindowEvent e) {
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                fecharConexao();
+                if (TelaJogos.this.telaAnterior != null) {
                     TelaJogos.this.telaAnterior.setVisible(true);
                 }
-            });
-        }
+            }
+        });
 
         try {
             conexao = Conexao.conectar();
@@ -153,29 +155,21 @@ public class TelaJogos extends JFrame {
         btnSalvar = new JButton("Salvar");
         btnEditar = new JButton("Editar");
         btnDeletar = new JButton("Deletar");
-        btnBuscarTodos = new JButton("Buscar Todos");
-        btnFiltrarGenero = new JButton("Filtrar por Gênero");
 
         EstiloUI.estilizarBotao(btnNovo, new Color(90, 103, 117));
         EstiloUI.estilizarBotao(btnSalvar, new Color(43, 142, 95));
         EstiloUI.estilizarBotao(btnEditar, new Color(27, 115, 173));
         EstiloUI.estilizarBotao(btnDeletar, new Color(188, 72, 72));
-        EstiloUI.estilizarBotao(btnBuscarTodos, new Color(120, 96, 173));
-        EstiloUI.estilizarBotao(btnFiltrarGenero, new Color(206, 130, 16));
 
         painel.add(btnNovo);
         painel.add(btnSalvar);
         painel.add(btnEditar);
         painel.add(btnDeletar);
-        painel.add(btnBuscarTodos);
-        painel.add(btnFiltrarGenero);
 
         btnNovo.addActionListener(e -> limparFormulario());
         btnSalvar.addActionListener(e -> salvarJogo());
         btnEditar.addActionListener(e -> editarJogo());
         btnDeletar.addActionListener(e -> deletarJogo());
-        btnBuscarTodos.addActionListener(e -> carregarTabela());
-        btnFiltrarGenero.addActionListener(e -> filtrarPorGenero());
 
         return painel;
     }
@@ -285,30 +279,6 @@ public class TelaJogos extends JFrame {
         }
     }
 
-    private void filtrarPorGenero() {
-        String genero = JOptionPane.showInputDialog(this, "Digite o gênero para filtrar:");
-        if (genero != null && !genero.isEmpty()) {
-            try {
-                modeloTabela.setRowCount(0);
-                List<Object[]> jogos = dql.jogos.Selects.filtrarPorGenero(conexao, genero.trim());
-                jogosTabela = new ArrayList<>();
-                for (Object[] row : jogos) {
-                    Jogo jogo = new Jogo(
-                            Integer.parseInt(String.valueOf(row[0])),
-                            String.valueOf(row[1]),
-                            Integer.parseInt(String.valueOf(row[2])),
-                            String.valueOf(row[3]),
-                            String.valueOf(row[4])
-                    );
-                    jogosTabela.add(jogo);
-                    modeloTabela.addRow(new Object[]{jogo.getId(), jogo.getNome(), jogo.getAnoLancamento(), jogo.getDesenvolvedora(), jogo.getGenero()});
-                }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Erro ao filtrar: " + e.getMessage());
-            }
-        }
-    }
-
     private void limparFormulario() {
         txtNome.setText("");
         txtAno.setText("");
@@ -326,5 +296,18 @@ public class TelaJogos extends JFrame {
         txtAno.setText(String.valueOf(modeloTabela.getValueAt(linha, 2)));
         txtDesenvolvedora.setText(String.valueOf(modeloTabela.getValueAt(linha, 3)));
         txtGenero.setText(String.valueOf(modeloTabela.getValueAt(linha, 4)));
+    }
+
+    private void fecharConexao() {
+        if (conexao == null) {
+            return;
+        }
+        try {
+            if (!conexao.isClosed()) {
+                conexao.close();
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao fechar conexao de jogos: " + e.getMessage());
+        }
     }
 }

@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,14 +37,15 @@ public class TelaJogadores extends JFrame {
         setSize(900, 600);
         setLocationRelativeTo(null);
         EstiloUI.aplicarTemaJanela(this);
-        if (telaAnterior != null) {
-            addWindowListener(new java.awt.event.WindowAdapter() {
-                @Override
-                public void windowClosed(java.awt.event.WindowEvent e) {
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                fecharConexao();
+                if (TelaJogadores.this.telaAnterior != null) {
                     TelaJogadores.this.telaAnterior.setVisible(true);
                 }
-            });
-        }
+            }
+        });
 
         try {
             conexao = Conexao.conectar();
@@ -323,6 +325,19 @@ public class TelaJogadores extends JFrame {
                     break;
                 }
             }
+        }
+    }
+
+    private void fecharConexao() {
+        if (conexao == null) {
+            return;
+        }
+        try {
+            if (!conexao.isClosed()) {
+                conexao.close();
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao fechar conexao de jogadores: " + e.getMessage());
         }
     }
 }

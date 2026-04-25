@@ -13,6 +13,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,14 +42,15 @@ public class TelaAvaliacoes extends JFrame {
         setSize(1000, 650);
         setLocationRelativeTo(null);
         EstiloUI.aplicarTemaJanela(this);
-        if (telaAnterior != null) {
-            addWindowListener(new java.awt.event.WindowAdapter() {
-                @Override
-                public void windowClosed(java.awt.event.WindowEvent e) {
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                fecharConexao();
+                if (TelaAvaliacoes.this.telaAnterior != null) {
                     TelaAvaliacoes.this.telaAnterior.setVisible(true);
                 }
-            });
-        }
+            }
+        });
 
         try {
             conexao = Conexao.conectar();
@@ -109,44 +111,40 @@ public class TelaAvaliacoes extends JFrame {
     }
 
     private JPanel criarPainelFormulario() {
-        JPanel painel = new JPanel();
-        painel.setLayout(new BoxLayout(painel, BoxLayout.Y_AXIS));
+        JPanel painel = new JPanel(new BorderLayout(0, 10));
         painel.setBorder(EstiloUI.bordaSecao("Formulário de Avaliações"));
         painel.setBackground(EstiloUI.COR_CARD);
 
-        JPanel linha1 = new JPanel(new GridLayout(1, 6, 10, 10));
-        linha1.setBackground(EstiloUI.COR_CARD);
+        JPanel gradeCampos = new JPanel(new GridLayout(2, 3, 10, 10));
+        gradeCampos.setBackground(EstiloUI.COR_CARD);
 
-        linha1.add(new JLabel("Jogador:"));
         comboJogador = new JComboBox<>();
         EstiloUI.estilizarCombo(comboJogador);
-        linha1.add(comboJogador);
 
-        linha1.add(new JLabel("Jogo:"));
         comboJogo = new JComboBox<>();
         EstiloUI.estilizarCombo(comboJogo);
-        linha1.add(comboJogo);
 
-        linha1.add(new JLabel("Nota (0-10):"));
         txtNota = new JTextField();
         EstiloUI.estilizarCampo(txtNota);
-        linha1.add(txtNota);
 
-        JPanel linha2 = new JPanel(new GridLayout(1, 4, 10, 10));
-        linha2.setBackground(EstiloUI.COR_CARD);
-
-        linha2.add(new JLabel("Status:"));
         comboStatus = new JComboBox<>(new String[]{"Pendente", "Completa", "Revisada"});
         EstiloUI.estilizarCombo(comboStatus);
-        linha2.add(comboStatus);
 
-        linha2.add(new JLabel("Data (yyyy-MM-dd):"));
         txtData = new JTextField();
         EstiloUI.estilizarCampo(txtData);
-        linha2.add(txtData);
 
-        JPanel linha3 = new JPanel(new BorderLayout(0, 6));
-        linha3.setBackground(EstiloUI.COR_CARD);
+        gradeCampos.add(criarCampoFormulario("Jogador:", comboJogador));
+        gradeCampos.add(criarCampoFormulario("Jogo:", comboJogo));
+        gradeCampos.add(criarCampoFormulario("Nota (0-10):", txtNota));
+        gradeCampos.add(criarCampoFormulario("Status:", comboStatus));
+        gradeCampos.add(criarCampoFormulario("Data (yyyy-MM-dd):", txtData));
+
+        JPanel preenchimento = new JPanel();
+        preenchimento.setOpaque(false);
+        gradeCampos.add(preenchimento);
+
+        JPanel painelComentario = new JPanel(new BorderLayout(0, 6));
+        painelComentario.setBackground(EstiloUI.COR_CARD);
 
         JLabel lblComentario = new JLabel("Comentário:");
         txtComentario = new JTextArea(2, 30);
@@ -154,18 +152,23 @@ public class TelaAvaliacoes extends JFrame {
         txtComentario.setLineWrap(true);
         txtComentario.setWrapStyleWord(true);
         JScrollPane scrollComentario = new JScrollPane(txtComentario);
-        scrollComentario.setPreferredSize(new Dimension(0, 70));
+        scrollComentario.setPreferredSize(new Dimension(0, 78));
 
-        linha3.add(lblComentario, BorderLayout.NORTH);
-        linha3.add(scrollComentario, BorderLayout.CENTER);
+        painelComentario.add(lblComentario, BorderLayout.NORTH);
+        painelComentario.add(scrollComentario, BorderLayout.CENTER);
 
-        painel.add(linha1);
-        painel.add(Box.createVerticalStrut(8));
-        painel.add(linha2);
-        painel.add(Box.createVerticalStrut(8));
-        painel.add(linha3);
+        painel.add(gradeCampos, BorderLayout.NORTH);
+        painel.add(painelComentario, BorderLayout.CENTER);
 
         return painel;
+    }
+
+    private JPanel criarCampoFormulario(String rotulo, JComponent campo) {
+        JPanel painelCampo = new JPanel(new BorderLayout(0, 6));
+        painelCampo.setBackground(EstiloUI.COR_CARD);
+        painelCampo.add(new JLabel(rotulo), BorderLayout.NORTH);
+        painelCampo.add(campo, BorderLayout.CENTER);
+        return painelCampo;
     }
 
     private JPanel criarPainelTabela() {
@@ -436,6 +439,19 @@ public class TelaAvaliacoes extends JFrame {
                     break;
                 }
             }
+        }
+    }
+
+    private void fecharConexao() {
+        if (conexao == null) {
+            return;
+        }
+        try {
+            if (!conexao.isClosed()) {
+                conexao.close();
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao fechar conexao de avaliacoes: " + e.getMessage());
         }
     }
 }
