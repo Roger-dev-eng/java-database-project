@@ -17,9 +17,7 @@ O projeto combina interface gráfica com operações CRUD e consultas SQL, usand
 - [Fluxo da aplicação](#fluxo-da-aplicação)
 - [Consultas disponíveis](#consultas-disponíveis)
 - [Validações implementadas](#validações-implementadas)
-- [Estado atual do projeto](#estado-atual-do-projeto)
-- [Melhorias recomendadas](#melhorias-recomendadas)
-- [Licença](#licença)
+- [Vídeo Explicativo e Demonstrativo](#vídeo-explicativo-e-demonstrativo)
 
 ## Visão geral
 
@@ -213,3 +211,6 @@ O projeto possui validações reutilizáveis para:
 - validação de faixa numérica
 
 Essas regras estão centralizadas em `app.validation.Validator`.
+
+## Vídeo Explicativo e Demonstrativo
+https://drive.google.com/file/d/1SSahKolN3dFNy1kENJBgL0YhF2CDtx4J/view?usp=sharing
