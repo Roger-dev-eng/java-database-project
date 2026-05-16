@@ -156,8 +156,6 @@ $env:DB_PASSWORD="sua_senha"
 
 A conexão JDBC é centralizada em [src/app/db/Database.java](src/app/db/Database.java).
 
-O dashboard web também utiliza essas mesmas credenciais de banco para consultar os dados analíticos.
-
 ## Como compilar e executar
 
 ### Opção 1: compilação manual
@@ -183,13 +181,6 @@ src/MenuPrincipal.java
 ```
 
 Essa classe delega a inicialização para a interface principal em `InterfaceSwing.MenuPrincipal`.
-
-### Execução do dashboard
-
-O dashboard pode ser aberto de duas formas:
-
-- pelo botão `Dashboard` no menu principal da aplicação Java
-- manualmente com Streamlit, executando `dashboard/dashboard.py`
 
 ## Dashboard web
 
@@ -247,8 +238,6 @@ O dashboard também pode ser aberto a partir do botão `Dashboard` no menu princ
 <img width="753" height="448" alt="Image" src="https://github.com/user-attachments/assets/7427ab1d-7cda-4851-b842-12e6c29548b7" />
 
 4. O botão `Dashboard` também permite abrir a visualização web analítica do sistema.
-
-O dashboard usa o mesmo banco de dados da aplicação principal para exibir indicadores e gráficos.
 
 5. Cada tela operacional realiza consultas e operações CRUD no banco.
 
