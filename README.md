@@ -14,6 +14,7 @@ O projeto combina interface gráfica com operações CRUD e consultas SQL, usand
 - [Requisitos](#requisitos)
 - [Configuração do banco](#configuração-do-banco)
 - [Como compilar e executar](#como-compilar-e-executar)
+- [Dashboard web](#dashboard-web)
 - [Fluxo da aplicação](#fluxo-da-aplicação)
 - [Consultas disponíveis](#consultas-disponíveis)
 - [Validações implementadas](#validações-implementadas)
@@ -40,6 +41,8 @@ O sistema oferece:
 - PostgreSQL
 - JDBC
 - Maven
+- Python
+- Streamlit
 
 ## Estrutura do projeto
 
@@ -85,11 +88,15 @@ src/
     Insert.java
     Update.java
     Delete.java
-  dql/
+dql/
     jogos/
     jogadores/
     plataformas/
     avaliacoes/
+dashboard/
+  app.py
+  dashboard.py
+  requirements.txt
 ```
 
 ## Arquitetura
@@ -168,6 +175,47 @@ src/MenuPrincipal.java
 
 Essa classe delega a inicialização para a interface principal em `InterfaceSwing.MenuPrincipal`.
 
+## Dashboard web
+
+Além da interface desktop em Swing, o projeto também possui um dashboard web analítico construído em Python com Streamlit.
+
+Ele foi pensado para complementar o sistema operacional com uma visualização mais gerencial dos dados cadastrados no banco.
+
+### Arquivos do dashboard
+
+- `dashboard/dashboard.py`: arquivo principal da aplicação Streamlit
+- `dashboard/app.py`: ponto de compatibilidade para abertura pelo launcher Java
+- `dashboard/requirements.txt`: dependências Python do dashboard
+
+### Funcionalidades do dashboard
+
+- KPIs com quantidade de jogos, jogadores cadastrados, média geral das notas e plataforma mais usada
+- filtros dinâmicos por gênero, status da avaliação e faixa de ano de lançamento
+- gráficos com agregações e agrupamentos SQL
+- ranking de jogos por volume de avaliações
+
+### Como executar manualmente
+
+Instale as dependências do dashboard:
+
+```powershell
+pip install -r .\dashboard\requirements.txt
+```
+
+Depois execute:
+
+```powershell
+streamlit run .\dashboard\dashboard.py
+```
+
+O dashboard também pode ser aberto a partir do botão `Dashboard` no menu principal da aplicação Java.
+
+### Observações importantes
+
+- o dashboard usa o mesmo banco PostgreSQL da aplicação desktop
+- ele depende das variáveis `DB_URL`, `DB_USER` e `DB_PASSWORD`
+- as dependências Python do dashboard não ficam no `pom.xml`, porque pertencem a outro ecossistema
+
 ## Fluxo da aplicação
 
 1. O usuário acessa a tela de login.
@@ -182,11 +230,13 @@ Essa classe delega a inicialização para a interface principal em `InterfaceSwi
 
 <img width="753" height="448" alt="Image" src="https://github.com/user-attachments/assets/7427ab1d-7cda-4851-b842-12e6c29548b7" />
 
-4. Cada tela operacional realiza consultas e operações CRUD no banco.
+4. O botão `Dashboard` também permite abrir a visualização web analítica do sistema.
+
+5. Cada tela operacional realiza consultas e operações CRUD no banco.
 
 <img width="1094" height="732" alt="Image" src="https://github.com/user-attachments/assets/c8c315be-7db3-4c82-ab19-9326c48690aa" />
 
-5. A tela "Ver Tabelas" permite executar consultas simples e avançadas.
+6. A tela "Ver Tabelas" permite executar consultas simples e avançadas.
 
 <img width="1195" height="745" alt="Image" src="https://github.com/user-attachments/assets/7edc9253-f030-4012-b052-1ce4bd87fcfc" />
 

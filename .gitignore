@@ -3,3 +3,5 @@ bin/
 .vscode/
 .project
 out/
+dashboard.log
+__pycache__/
