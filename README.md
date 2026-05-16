@@ -1,8 +1,8 @@
 # Sistema de Gerenciamento de Banco de Dados sobre Jogos
 
-Aplicação desktop em Java, Swing e PostgreSQL para gerenciamento de jogos, jogadores, plataformas e avaliações.
+Aplicação híbrida com interface desktop em Java Swing e dashboard web em Python Streamlit para gerenciamento e visualização analítica de jogos, jogadores, plataformas e avaliações.
 
-O projeto combina interface gráfica com operações CRUD e consultas SQL, usando uma organização em camadas para separar interface, acesso a dados, validação e serviços.
+O projeto combina interface gráfica, operações CRUD, consultas SQL e visualização analítica, usando uma organização em camadas para separar interface, acesso a dados, validação, serviços e apresentação web.
 
 ## Conteúdo
 
@@ -31,6 +31,7 @@ O sistema oferece:
 - CRUD de plataformas
 - CRUD de avaliações
 - tela de consultas com listagens, filtros, joins e agregações
+- dashboard web com KPIs, filtros dinâmicos e gráficos analíticos
 
 <img width="753" height="448" alt="Image" src="https://github.com/user-attachments/assets/7427ab1d-7cda-4851-b842-12e6c29548b7" />
 
@@ -43,6 +44,9 @@ O sistema oferece:
 - Maven
 - Python
 - Streamlit
+- Pandas
+- Plotly
+- Psycopg
 
 ## Estrutura do projeto
 
@@ -112,6 +116,7 @@ O código está organizado em camadas e módulos com responsabilidades bem defin
 - `ddl`: concentra a definição estrutural do banco, isto é, os elementos responsáveis pela criação das tabelas.
 - `dml`: reúne as instruções de manipulação de dados, como inserções, atualizações e exclusões.
 - `dql`: reúne as consultas SQL usadas para leitura de dados.
+- `dashboard`: concentra a camada analítica web construída com Streamlit. Essa parte consome o mesmo banco PostgreSQL da aplicação desktop, aplica filtros dinâmicos, executa consultas agregadas e apresenta KPIs e gráficos para apoio gerencial.
 
 ## Modelo de dados da aplicação
 
@@ -128,6 +133,8 @@ As entidades centrais do sistema são:
 - PostgreSQL em execução
 - variáveis de ambiente configuradas para acesso ao banco
 - Maven opcional para build
+- Python instalado para execução do dashboard web
+- dependências do dashboard instaladas via `dashboard/requirements.txt`
 
 O `pom.xml` está configurado com:
 
@@ -148,6 +155,8 @@ $env:DB_PASSWORD="sua_senha"
 ```
 
 A conexão JDBC é centralizada em [src/app/db/Database.java](src/app/db/Database.java).
+
+O dashboard web também utiliza essas mesmas credenciais de banco para consultar os dados analíticos.
 
 ## Como compilar e executar
 
@@ -175,6 +184,13 @@ src/MenuPrincipal.java
 
 Essa classe delega a inicialização para a interface principal em `InterfaceSwing.MenuPrincipal`.
 
+### Execução do dashboard
+
+O dashboard pode ser aberto de duas formas:
+
+- pelo botão `Dashboard` no menu principal da aplicação Java
+- manualmente com Streamlit, executando `dashboard/dashboard.py`
+
 ## Dashboard web
 
 Além da interface desktop em Swing, o projeto também possui um dashboard web analítico construído em Python com Streamlit.
@@ -191,7 +207,7 @@ Ele foi pensado para complementar o sistema operacional com uma visualização m
 
 - KPIs com quantidade de jogos, jogadores cadastrados, média geral das notas e plataforma mais usada
 - filtros dinâmicos por gênero, status da avaliação e faixa de ano de lançamento
-- gráficos com agregações e agrupamentos SQL
+- gráficos com agregações, agrupamentos, ordenações e filtros SQL
 - ranking de jogos por volume de avaliações
 
 ### Como executar manualmente
@@ -231,6 +247,8 @@ O dashboard também pode ser aberto a partir do botão `Dashboard` no menu princ
 <img width="753" height="448" alt="Image" src="https://github.com/user-attachments/assets/7427ab1d-7cda-4851-b842-12e6c29548b7" />
 
 4. O botão `Dashboard` também permite abrir a visualização web analítica do sistema.
+
+O dashboard usa o mesmo banco de dados da aplicação principal para exibir indicadores e gráficos.
 
 5. Cada tela operacional realiza consultas e operações CRUD no banco.
 
