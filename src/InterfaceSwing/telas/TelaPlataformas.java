@@ -19,7 +19,7 @@ public class TelaPlataformas extends JFrame {
     private DefaultTableModel modeloTabela;
     private JTextField txtNome, txtHoras;
     private JComboBox<String> comboJogador;
-    private JButton btnNovo, btnSalvar, btnEditar, btnDeletar, btnBuscarTodos;
+    private JButton btnNovo, btnSalvar, btnEditar, btnDeletar;
     private Connection conexao;
     private PlataformaRepository plataformaRepository;
     private JogadorRepository jogadorRepository;
@@ -159,25 +159,21 @@ public class TelaPlataformas extends JFrame {
         btnSalvar = new JButton("Salvar");
         btnEditar = new JButton("Editar");
         btnDeletar = new JButton("Deletar");
-        btnBuscarTodos = new JButton("Buscar Todos");
 
         EstiloUI.estilizarBotao(btnNovo, new Color(90, 103, 117));
         EstiloUI.estilizarBotao(btnSalvar, new Color(43, 142, 95));
         EstiloUI.estilizarBotao(btnEditar, new Color(27, 115, 173));
         EstiloUI.estilizarBotao(btnDeletar, new Color(188, 72, 72));
-        EstiloUI.estilizarBotao(btnBuscarTodos, new Color(120, 96, 173));
 
         painel.add(btnNovo);
         painel.add(btnSalvar);
         painel.add(btnEditar);
         painel.add(btnDeletar);
-        painel.add(btnBuscarTodos);
 
         btnNovo.addActionListener(e -> limparFormulario());
         btnSalvar.addActionListener(e -> salvarPlataforma());
         btnEditar.addActionListener(e -> editarPlataforma());
         btnDeletar.addActionListener(e -> deletarPlataforma());
-        btnBuscarTodos.addActionListener(e -> carregarTabela());
 
         return painel;
     }

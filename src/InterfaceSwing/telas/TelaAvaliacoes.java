@@ -23,7 +23,7 @@ public class TelaAvaliacoes extends JFrame {
     private JTextField txtNota, txtData;
     private JTextArea txtComentario;
     private JComboBox<String> comboJogador, comboJogo, comboStatus;
-    private JButton btnNovo, btnSalvar, btnEditar, btnDeletar, btnBuscarTodos;
+    private JButton btnNovo, btnSalvar, btnEditar, btnDeletar;
     private Connection conexao;
     private AvaliacaoRepository avaliacaoRepository;
     private JogadorRepository jogadorRepository;
@@ -204,25 +204,21 @@ public class TelaAvaliacoes extends JFrame {
         btnSalvar = new JButton("Salvar");
         btnEditar = new JButton("Editar");
         btnDeletar = new JButton("Deletar");
-        btnBuscarTodos = new JButton("Buscar Todos");
 
         EstiloUI.estilizarBotao(btnNovo, new Color(90, 103, 117));
         EstiloUI.estilizarBotao(btnSalvar, new Color(43, 142, 95));
         EstiloUI.estilizarBotao(btnEditar, new Color(27, 115, 173));
         EstiloUI.estilizarBotao(btnDeletar, new Color(188, 72, 72));
-        EstiloUI.estilizarBotao(btnBuscarTodos, new Color(120, 96, 173));
 
         painel.add(btnNovo);
         painel.add(btnSalvar);
         painel.add(btnEditar);
         painel.add(btnDeletar);
-        painel.add(btnBuscarTodos);
 
         btnNovo.addActionListener(e -> limparFormulario());
         btnSalvar.addActionListener(e -> salvarAvaliacao());
         btnEditar.addActionListener(e -> editarAvaliacao());
         btnDeletar.addActionListener(e -> deletarAvaliacao());
-        btnBuscarTodos.addActionListener(e -> carregarTabela());
 
         return painel;
     }
