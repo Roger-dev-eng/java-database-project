@@ -35,6 +35,8 @@ O sistema oferece:
 
 <img width="753" height="448" alt="Image" src="https://github.com/user-attachments/assets/7427ab1d-7cda-4851-b842-12e6c29548b7" />
 
+
+
 ## Stack
 
 - Java
