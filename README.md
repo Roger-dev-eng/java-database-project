@@ -33,12 +33,11 @@ O sistema oferece:
 - tela de consultas com listagens, filtros, joins e agregações
 - dashboard web com KPIs, filtros dinâmicos e gráficos analíticos
 
-<img width="753" height="448" alt="Image" src="https://github.com/user-attachments/assets/7427ab1d-7cda-4851-b842-12e6c29548b7" />
+<img width="847" height="516" alt="593601846-10c21cdf-d2af-4520-9251-a8d20b07dbd7" src="https://github.com/user-attachments/assets/07955e4c-45cf-4185-9804-6218dd1ede28" />
 
 
 
 ## Stack
-
 - Java
 - Swing
 - PostgreSQL
@@ -237,9 +236,12 @@ O dashboard também pode ser aberto a partir do botão `Dashboard` no menu princ
 
 3. O menu principal libera acesso aos módulos.
 
-<img width="753" height="448" alt="Image" src="https://github.com/user-attachments/assets/7427ab1d-7cda-4851-b842-12e6c29548b7" />
+<img width="847" height="516" alt="593601846-10c21cdf-d2af-4520-9251-a8d20b07dbd7" src="https://github.com/user-attachments/assets/07955e4c-45cf-4185-9804-6218dd1ede28" />
 
 4. O botão `Dashboard` também permite abrir a visualização web analítica do sistema.
+
+[e1153fb2-70fd-4750-8275-8ca4a69c8f18.webm](https://github.com/user-attachments/assets/7da07457-c2a2-45a0-b320-cf7c1b21eeb2)
+
 
 5. Cada tela operacional realiza consultas e operações CRUD no banco.
 
