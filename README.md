@@ -240,8 +240,7 @@ O dashboard também pode ser aberto a partir do botão `Dashboard` no menu princ
 
 4. O botão `Dashboard` também permite abrir a visualização web analítica do sistema.
 
-[e1153fb2-70fd-4750-8275-8ca4a69c8f18.webm](https://github.com/user-attachments/assets/7da07457-c2a2-45a0-b320-cf7c1b21eeb2)
-
+https://github.com/user-attachments/assets/13cd62b6-8579-459e-b6a7-da05a22b7fa9
 
 5. Cada tela operacional realiza consultas e operações CRUD no banco.
 
