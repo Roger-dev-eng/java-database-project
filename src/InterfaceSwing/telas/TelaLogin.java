@@ -1,5 +1,6 @@
 package InterfaceSwing.telas;
 
+import InterfaceSwing.MenuPrincipal;
 import javax.swing.*;
 import java.awt.*;
 
@@ -10,22 +11,36 @@ public class TelaLogin extends JFrame {
     public TelaLogin() {
         setTitle("Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(480, 280);
+        setSize(1180, 720);
         setLocationRelativeTo(null);
         setResizable(false);
         EstiloUI.aplicarTemaJanela(this);
 
-        JPanel painelPrincipal = new JPanel(new BorderLayout(12, 12));
-        painelPrincipal.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        JPanel painelPrincipal = new JPanel(new GridBagLayout());
+        painelPrincipal.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
         painelPrincipal.setBackground(EstiloUI.COR_FUNDO);
+
+        JPanel card = new JPanel(new BorderLayout(12, 12));
+        card.setBackground(EstiloUI.COR_CARD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(EstiloUI.COR_BORDA),
+                BorderFactory.createEmptyBorder(22, 26, 22, 26)
+        ));
 
         JLabel lblTitulo = new JLabel("Login", SwingConstants.CENTER);
         lblTitulo.setFont(EstiloUI.FONTE_TITULO);
         lblTitulo.setForeground(EstiloUI.COR_TEXTO);
 
-        JPanel painelFormulario = new JPanel(new GridLayout(2, 1, 8, 8));
-        painelFormulario.setBackground(EstiloUI.COR_FUNDO);
-        painelFormulario.setBorder(BorderFactory.createEmptyBorder(10, 40, 10, 40));
+        JLabel lblSubtitulo = new JLabel("Digite seu nome para continuar.", SwingConstants.CENTER);
+        EstiloUI.estilizarLabelSecundaria(lblSubtitulo);
+
+        JPanel painelTopo = new JPanel(new GridLayout(2, 1, 6, 6));
+        painelTopo.setBackground(EstiloUI.COR_CARD);
+        painelTopo.add(lblTitulo);
+        painelTopo.add(lblSubtitulo);
+
+        JPanel painelFormulario = new JPanel(new GridLayout(2, 1, 10, 10));
+        painelFormulario.setBackground(EstiloUI.COR_CARD);
 
         txtNome = new JTextField();
         EstiloUI.estilizarCampo(txtNome);
@@ -37,8 +52,17 @@ public class TelaLogin extends JFrame {
         painelFormulario.add(txtNome);
         painelFormulario.add(btnEntrar);
 
-        painelPrincipal.add(lblTitulo, BorderLayout.NORTH);
-        painelPrincipal.add(painelFormulario, BorderLayout.CENTER);
+        card.add(painelTopo, BorderLayout.NORTH);
+        card.add(painelFormulario, BorderLayout.CENTER);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        painelPrincipal.add(card, gbc);
 
         btnEntrar.addActionListener(e -> continuar());
         txtNome.addActionListener(e -> continuar());
@@ -55,6 +79,6 @@ public class TelaLogin extends JFrame {
             return;
         }
 
-        EstiloUI.transicaoSuave(this, () -> new TelaBoasVindas(nome));
+        EstiloUI.transicaoSuave(this, () -> new MenuPrincipal(nome));
     }
 }

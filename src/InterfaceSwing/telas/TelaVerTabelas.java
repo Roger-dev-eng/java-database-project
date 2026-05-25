@@ -9,7 +9,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
-public class TelaVerTabelas extends JFrame {
+public class TelaVerTabelas extends JPanel {
     private JComboBox<String> comboModo;
     private JComboBox<String> comboTabelas;
     private JComboBox<String> comboConsulta;
@@ -17,40 +17,16 @@ public class TelaVerTabelas extends JFrame {
     private DefaultTableModel modeloTabela;
     private Connection conexao;
     private ConsultaService consultaService;
-    private JFrame telaAnterior;
-    private boolean voltarParaAnterior;
 
     public TelaVerTabelas() {
-        this(null);
-    }
-
-    public TelaVerTabelas(JFrame telaAnterior) {
-        this.telaAnterior = telaAnterior;
-        setTitle("Ver Tabelas");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(980, 620);
-        setLocationRelativeTo(null);
-        EstiloUI.aplicarTemaJanela(this);
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosed(java.awt.event.WindowEvent e) {
-                fecharConexao();
-                if (TelaVerTabelas.this.telaAnterior != null) {
-                    if (voltarParaAnterior) {
-                        TelaVerTabelas.this.telaAnterior.setVisible(true);
-                    } else {
-                        TelaVerTabelas.this.telaAnterior.dispose();
-                    }
-                }
-            }
-        });
+        setLayout(new BorderLayout());
+        setBackground(EstiloUI.COR_FUNDO);
 
         try {
             conexao = Conexao.conectar();
             consultaService = new ConsultaService(conexao);
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao conectar ao banco: " + e.getMessage());
-            dispose();
+            mostrarErro("Erro ao conectar ao banco: " + e.getMessage());
             return;
         }
 
@@ -64,8 +40,6 @@ public class TelaVerTabelas extends JFrame {
 
         JPanel painelEsquerda = new JPanel(new FlowLayout(FlowLayout.LEFT));
         painelEsquerda.setBackground(EstiloUI.COR_CARD);
-        JPanel painelDireita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        painelDireita.setBackground(EstiloUI.COR_CARD);
 
         comboTabelas = new JComboBox<>(new String[] {"Jogos", "Jogadores", "Plataformas", "Avaliacoes"});
         EstiloUI.estilizarCombo(comboTabelas);
@@ -87,19 +61,7 @@ public class TelaVerTabelas extends JFrame {
         painelEsquerda.add(comboConsulta);
         painelEsquerda.add(btnExecutar);
 
-        if (this.telaAnterior != null) {
-            JButton btnVoltar = new JButton("<- Voltar");
-            btnVoltar.setFont(new Font("Trebuchet MS", Font.PLAIN, 12));
-            btnVoltar.setForeground(new Color(190, 205, 220));
-            btnVoltar.setBackground(new Color(47, 55, 66));
-            btnVoltar.setFocusPainted(false);
-            btnVoltar.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
-            btnVoltar.addActionListener(e -> voltar());
-            painelDireita.add(btnVoltar);
-        }
-
         painelTopo.add(painelEsquerda, BorderLayout.WEST);
-        painelTopo.add(painelDireita, BorderLayout.EAST);
 
         JPanel painelTabela = new JPanel(new BorderLayout());
         painelTabela.setBorder(EstiloUI.bordaSecao("Dados"));
@@ -119,15 +81,19 @@ public class TelaVerTabelas extends JFrame {
         comboTabelas.addActionListener(e -> atualizarConsultasDisponiveis());
         comboModo.addActionListener(e -> atualizarConsultasDisponiveis());
 
-        add(painelPrincipal);
+        add(painelPrincipal, BorderLayout.CENTER);
         atualizarConsultasDisponiveis();
         executarConsultaSelecionada();
-        setVisible(true);
     }
 
-    private void voltar() {
-        voltarParaAnterior = true;
-        dispose();
+    private void mostrarErro(String mensagem) {
+        JPanel painel = new JPanel(new BorderLayout());
+        painel.setBackground(EstiloUI.COR_FUNDO);
+        JLabel label = new JLabel(mensagem, SwingConstants.CENTER);
+        label.setForeground(EstiloUI.COR_TEXTO);
+        label.setFont(EstiloUI.FONTE_PADRAO);
+        painel.add(label, BorderLayout.CENTER);
+        add(painel, BorderLayout.CENTER);
     }
 
     private void atualizarConsultasDisponiveis() {
@@ -142,6 +108,7 @@ public class TelaVerTabelas extends JFrame {
         if ("Simples".equals(modo)) {
             comboConsulta.addItem("Listar todos");
             comboConsulta.addItem("Buscar por ID");
+            comboConsulta.addItem("Buscar por nome");
             return;
         }
 
@@ -218,7 +185,7 @@ public class TelaVerTabelas extends JFrame {
     }
 
     private boolean consultaExigeParametro(String tabela, String modo, String consulta) {
-        if ("Simples".equals(modo) && "Buscar por ID".equals(consulta)) {
+        if ("Simples".equals(modo) && ("Buscar por ID".equals(consulta) || "Buscar por nome".equals(consulta))) {
             return true;
         }
         if ("Filtros".equals(modo)) {
@@ -233,6 +200,9 @@ public class TelaVerTabelas extends JFrame {
         }
 
         if ("Simples".equals(modo)) {
+            if ("Buscar por nome".equals(consulta)) {
+                return solicitarTexto("Digite o nome:");
+            }
             return solicitarTexto("Digite o ID:");
         }
 

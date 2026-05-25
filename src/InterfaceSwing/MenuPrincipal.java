@@ -1,157 +1,193 @@
 package InterfaceSwing;
 
-import javax.swing.*;
-import InterfaceSwing.telas.TelaAvaliacoes;
+import InterfaceSwing.telas.DashboardLauncher;
 import InterfaceSwing.telas.EstiloUI;
-import InterfaceSwing.telas.TelaLogin;
+import InterfaceSwing.telas.TelaAvaliacoes;
 import InterfaceSwing.telas.TelaJogadores;
 import InterfaceSwing.telas.TelaJogos;
 import InterfaceSwing.telas.TelaPlataformas;
 import InterfaceSwing.telas.TelaVerTabelas;
-import InterfaceSwing.telas.DashboardLauncher;
-
+import javax.swing.*;
 import java.awt.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class MenuPrincipal extends JFrame {
-    private static final Dimension TAM_BOTAO_MENU = new Dimension(175, 44);
-    private static final Dimension TAM_BOTAO_SAIR = new Dimension(80, 32);
-    private JPanel painelPrincipal;
-    private JButton btnJogos;
-    private JButton btnJogadores;
-    private JButton btnPlataformas;
-    private JButton btnAvaliacoes;
-    private JButton btnVerTabelas;
-    private JButton btnDashboard;
-    private JButton btnSair;
+    private static final Dimension TAM_BOTAO_MENU = new Dimension(185, 42);
+    private static final Color COR_SIDEBAR = new Color(24, 30, 37);
+    private static final Color COR_SIDEBAR_ITEM = new Color(34, 42, 52);
+    private static final Color COR_SIDEBAR_ATIVO = new Color(24, 91, 168);
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel painelConteudo = new JPanel(cardLayout);
+    private final Map<String, JButton> botoesMenu = new LinkedHashMap<>();
+
+    private final String nomeUsuario;
 
     public MenuPrincipal() {
-        setTitle("Sistema de Gerenciamento de Jogos");
+        this("Usuario");
+    }
+
+    public MenuPrincipal(String nomeUsuario) {
+        this.nomeUsuario = nomeUsuario == null || nomeUsuario.trim().isEmpty()
+                ? "Usuario"
+                : nomeUsuario.trim();
+        setTitle("Gerenciamento de Jogos");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(700, 430);
+        setSize(1180, 720);
         setLocationRelativeTo(null);
         setResizable(false);
         EstiloUI.aplicarTemaJanela(this);
 
-        painelPrincipal = new JPanel();
-        painelPrincipal.setLayout(new BorderLayout(0, 18));
-        painelPrincipal.setBorder(BorderFactory.createEmptyBorder(18, 20, 18, 20));
+        JPanel painelPrincipal = new JPanel(new BorderLayout());
         painelPrincipal.setBackground(EstiloUI.COR_FUNDO);
 
-        JPanel painelTitulo = new JPanel();
-        painelTitulo.setLayout(new BoxLayout(painelTitulo, BoxLayout.Y_AXIS));
-        painelTitulo.setBackground(EstiloUI.COR_FUNDO);
+        JPanel sidebar = criarSidebar();
+        JPanel conteudo = criarConteudo();
 
-        JLabel lblTitulo = new JLabel("Sistema de Gerenciamento de Jogos");
-        lblTitulo.setForeground(EstiloUI.COR_TEXTO);
-        lblTitulo.setFont(EstiloUI.FONTE_TITULO);
-
-        JLabel lblSubtitulo = new JLabel("Escolha um módulo para consultar ou gerenciar os dados.");
-        lblSubtitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        EstiloUI.estilizarLabelSecundaria(lblSubtitulo);
-
-        lblTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        painelTitulo.add(lblTitulo);
-        painelTitulo.add(Box.createVerticalStrut(6));
-        painelTitulo.add(lblSubtitulo);
-
-        JPanel painelBotoes = new JPanel();
-        painelBotoes.setLayout(new GridLayout(2, 3, 12, 12));
-        painelBotoes.setBackground(EstiloUI.COR_CARD);
-        painelBotoes.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(EstiloUI.COR_BORDA),
-                BorderFactory.createEmptyBorder(18, 18, 18, 18)
-        ));
-
-        btnJogos = criarBotao("Jogos", new Color(24, 91, 168));
-        btnJogadores = criarBotao("Jogadores", new Color(30, 101, 183));
-        btnPlataformas = criarBotao("Plataformas", new Color(37, 113, 196));
-        btnAvaliacoes = criarBotao("Avaliacoes", new Color(45, 124, 204));
-        btnVerTabelas = criarBotao("Ver Tabelas", new Color(20, 82, 153));
-        btnDashboard = criarBotao("Dashboard", new Color(70, 124, 58));
-
-        painelBotoes.add(btnJogos);
-        painelBotoes.add(btnJogadores);
-        painelBotoes.add(btnPlataformas);
-        painelBotoes.add(btnAvaliacoes);
-        painelBotoes.add(btnVerTabelas);
-        painelBotoes.add(btnDashboard);
-
-        JPanel painelCentro = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        painelCentro.setBackground(EstiloUI.COR_FUNDO);
-        painelCentro.add(painelBotoes);
-
-        JPanel painelRodape = new JPanel(new BorderLayout());
-        painelRodape.setBackground(EstiloUI.COR_FUNDO);
-
-        JPanel painelAcao = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        painelAcao.setBackground(EstiloUI.COR_FUNDO);
-        btnSair = new JButton("Sair");
-        btnSair.setFont(EstiloUI.FONTE_BOTAO);
-        btnSair.setPreferredSize(TAM_BOTAO_SAIR);
-        btnSair.setMinimumSize(TAM_BOTAO_SAIR);
-        btnSair.setMaximumSize(TAM_BOTAO_SAIR);
-        EstiloUI.estilizarBotao(btnSair, new Color(106, 125, 150));
-        btnSair.addActionListener(e -> System.exit(0));
-        painelAcao.add(btnSair);
-
-        painelRodape.add(painelAcao, BorderLayout.EAST);
-
-        painelPrincipal.add(painelTitulo, BorderLayout.NORTH);
-        painelPrincipal.add(painelCentro, BorderLayout.CENTER);
-        painelPrincipal.add(painelRodape, BorderLayout.SOUTH);
-
+        painelPrincipal.add(sidebar, BorderLayout.WEST);
+        painelPrincipal.add(conteudo, BorderLayout.CENTER);
         add(painelPrincipal);
-
-        btnJogos.addActionListener(e -> abrirTelaJogos());
-        btnJogadores.addActionListener(e -> abrirTelaJogadores());
-        btnPlataformas.addActionListener(e -> abrirTelaPlataformas());
-        btnAvaliacoes.addActionListener(e -> abrirTelaAvaliacoes());
-        btnVerTabelas.addActionListener(e -> abrirTelaVerTabelas());
-        btnDashboard.addActionListener(e -> abrirDashboard());
-
+        selecionarModulo("boasvindas");
         setVisible(true);
     }
 
-    private JButton criarBotao(String texto, Color cor) {
+    private JPanel criarSidebar() {
+        JPanel sidebar = new JPanel();
+        sidebar.setLayout(new BorderLayout());
+        sidebar.setPreferredSize(new Dimension(220, 0));
+        sidebar.setBackground(COR_SIDEBAR);
+
+        JPanel painelLogo = new JPanel();
+        painelLogo.setLayout(new BoxLayout(painelLogo, BoxLayout.Y_AXIS));
+        painelLogo.setBackground(COR_SIDEBAR);
+        painelLogo.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+
+        JLabel lblTitulo = new JLabel("Gerenciamento de Jogos");
+        lblTitulo.setForeground(EstiloUI.COR_TEXTO);
+        lblTitulo.setFont(EstiloUI.FONTE_BOTAO);
+
+        painelLogo.add(lblTitulo);
+
+        JPanel painelMenu = new JPanel();
+        painelMenu.setLayout(new BoxLayout(painelMenu, BoxLayout.Y_AXIS));
+        painelMenu.setBackground(COR_SIDEBAR);
+        painelMenu.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+
+        adicionarItemMenu(painelMenu, "Jogos", "jogos");
+        adicionarItemMenu(painelMenu, "Jogadores", "jogadores");
+        adicionarItemMenu(painelMenu, "Plataformas", "plataformas");
+        adicionarItemMenu(painelMenu, "Avaliacoes", "avaliacoes");
+        adicionarItemMenu(painelMenu, "Analises", "analises");
+        adicionarItemMenu(painelMenu, "Dashboard", "dashboard");
+
+        JPanel painelRodape = new JPanel(new BorderLayout());
+        painelRodape.setBackground(COR_SIDEBAR);
+        painelRodape.setBorder(BorderFactory.createEmptyBorder(12, 12, 18, 12));
+
+        JButton btnSair = new JButton("Sair");
+        EstiloUI.estilizarBotao(btnSair, new Color(86, 98, 112));
+        btnSair.addActionListener(e -> System.exit(0));
+        painelRodape.add(btnSair, BorderLayout.CENTER);
+
+        sidebar.add(painelLogo, BorderLayout.NORTH);
+        sidebar.add(painelMenu, BorderLayout.CENTER);
+        sidebar.add(painelRodape, BorderLayout.SOUTH);
+        return sidebar;
+    }
+
+    private JPanel criarConteudo() {
+        JPanel painel = new JPanel(new BorderLayout());
+        painel.setBackground(EstiloUI.COR_FUNDO);
+        painel.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+
+        painelConteudo.setBackground(EstiloUI.COR_FUNDO);
+        painelConteudo.add(criarBoasVindas(), "boasvindas");
+        painelConteudo.add(new TelaJogos(), "jogos");
+        painelConteudo.add(new TelaJogadores(), "jogadores");
+        painelConteudo.add(new TelaPlataformas(), "plataformas");
+        painelConteudo.add(new TelaAvaliacoes(), "avaliacoes");
+        painelConteudo.add(new TelaVerTabelas(), "analises");
+        painelConteudo.add(criarPainelDashboard(), "dashboard");
+
+        painel.add(painelConteudo, BorderLayout.CENTER);
+        return painel;
+    }
+
+    private JPanel criarBoasVindas() {
+        JPanel painel = new JPanel(new BorderLayout(0, 10));
+        painel.setBackground(EstiloUI.COR_FUNDO);
+
+        JLabel titulo = new JLabel("Bem-vindo, " + nomeUsuario, SwingConstants.CENTER);
+        titulo.setFont(EstiloUI.FONTE_TITULO);
+        titulo.setForeground(EstiloUI.COR_TEXTO);
+
+        JLabel subtitulo = new JLabel("Selecione um modulo no menu ao lado para continuar.", SwingConstants.CENTER);
+        EstiloUI.estilizarLabelSecundaria(subtitulo);
+
+        JPanel centro = new JPanel(new GridLayout(2, 1, 8, 8));
+        centro.setBackground(EstiloUI.COR_FUNDO);
+        centro.add(titulo);
+        centro.add(subtitulo);
+
+        painel.add(centro, BorderLayout.CENTER);
+        return painel;
+    }
+
+    private JPanel criarPainelDashboard() {
+        JPanel painel = new JPanel(new BorderLayout(0, 12));
+        painel.setBackground(EstiloUI.COR_FUNDO);
+
+        JLabel titulo = new JLabel("Dashboard");
+        titulo.setFont(EstiloUI.FONTE_TITULO);
+        titulo.setForeground(EstiloUI.COR_TEXTO);
+
+        JLabel subtitulo = new JLabel("Visualize o painel completo no navegador.");
+        EstiloUI.estilizarLabelSecundaria(subtitulo);
+
+        JButton btnAbrir = new JButton("Abrir Dashboard");
+        EstiloUI.estilizarBotao(btnAbrir, new Color(70, 124, 58));
+        btnAbrir.addActionListener(e -> DashboardLauncher.abrirDashboard(this));
+
+        JPanel topo = new JPanel(new BorderLayout());
+        topo.setBackground(EstiloUI.COR_FUNDO);
+        topo.add(titulo, BorderLayout.NORTH);
+        topo.add(subtitulo, BorderLayout.CENTER);
+
+        JPanel corpo = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        corpo.setBackground(EstiloUI.COR_FUNDO);
+        corpo.add(btnAbrir);
+
+        painel.add(topo, BorderLayout.NORTH);
+        painel.add(corpo, BorderLayout.CENTER);
+        return painel;
+    }
+
+    private void adicionarItemMenu(JPanel painelMenu, String texto, String chave) {
         JButton botao = new JButton(texto);
-        EstiloUI.estilizarBotao(botao, cor);
         botao.setPreferredSize(TAM_BOTAO_MENU);
-        botao.setMinimumSize(TAM_BOTAO_MENU);
         botao.setMaximumSize(TAM_BOTAO_MENU);
-        botao.setHorizontalAlignment(SwingConstants.CENTER);
-        return botao;
+        botao.setMinimumSize(TAM_BOTAO_MENU);
+        botao.setHorizontalAlignment(SwingConstants.LEFT);
+        botao.setFont(EstiloUI.FONTE_BOTAO);
+        botao.setForeground(EstiloUI.COR_TEXTO);
+        botao.setBackground(COR_SIDEBAR_ITEM);
+        botao.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
+        botao.setFocusPainted(false);
+        botao.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        botao.addActionListener(e -> selecionarModulo(chave));
+
+        painelMenu.add(botao);
+        painelMenu.add(Box.createVerticalStrut(6));
+        botoesMenu.put(chave, botao);
     }
 
-    private void abrirTelaJogos() {
-        setVisible(false);
-        new TelaJogos(this);
-    }
-
-    private void abrirTelaJogadores() {
-        setVisible(false);
-        new TelaJogadores(this);
-    }
-
-    private void abrirTelaPlataformas() {
-        setVisible(false);
-        new TelaPlataformas(this);
-    }
-
-    private void abrirTelaAvaliacoes() {
-        setVisible(false);
-        new TelaAvaliacoes(this);
-    }
-
-    private void abrirTelaVerTabelas() {
-        setVisible(false);
-        new TelaVerTabelas(this);
-    }
-
-    private void abrirDashboard() {
-        DashboardLauncher.abrirDashboard(this);
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(TelaLogin::new);
+    private void selecionarModulo(String chave) {
+        cardLayout.show(painelConteudo, chave);
+        for (Map.Entry<String, JButton> entry : botoesMenu.entrySet()) {
+            boolean ativo = entry.getKey().equals(chave);
+            JButton botao = entry.getValue();
+            botao.setBackground(ativo ? COR_SIDEBAR_ATIVO : COR_SIDEBAR_ITEM);
+            botao.setForeground(EstiloUI.COR_TEXTO);
+        }
     }
 }

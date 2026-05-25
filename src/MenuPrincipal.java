@@ -1,5 +1,8 @@
+import InterfaceSwing.telas.TelaLogin;
+import javax.swing.SwingUtilities;
+
 public class MenuPrincipal {
     public static void main(String[] args) {
-        InterfaceSwing.MenuPrincipal.main(args);
+        SwingUtilities.invokeLater(TelaLogin::new);
     }
 }

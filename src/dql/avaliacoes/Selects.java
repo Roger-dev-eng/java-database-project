@@ -101,4 +101,28 @@ public class Selects {
         }
         return resultados;
     }
+
+    public static List<Object[]> buscarPorNome(Connection conexao, String nome) throws SQLException {
+        List<Object[]> resultados = new ArrayList<>();
+        String sql = "SELECT * FROM avaliacoes WHERE LOWER(comentario) LIKE LOWER(?)";
+
+        try (PreparedStatement pstmt = conexao.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + nome + "%");
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Object[] linha = new Object[]{
+                            rs.getInt("id_avaliacao"),
+                            rs.getInt("nota"),
+                            rs.getString("comentario"),
+                            rs.getString("status"),
+                            rs.getDate("data_avaliacao"),
+                            rs.getInt("fk_jogador"),
+                            rs.getInt("fk_jogo")
+                    };
+                    resultados.add(linha);
+                }
+            }
+        }
+        return resultados;
+    }
 }

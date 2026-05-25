@@ -17,7 +17,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TelaAvaliacoes extends JFrame {
+public class TelaAvaliacoes extends JPanel {
     private JTable tabelaAvaliacoes;
     private DefaultTableModel modeloTabela;
     private JTextField txtNota, txtData;
@@ -29,33 +29,10 @@ public class TelaAvaliacoes extends JFrame {
     private JogadorRepository jogadorRepository;
     private JogoRepository jogoRepository;
     private List<Avaliacao> avaliacoesTabela;
-    private JFrame telaAnterior;
-    private boolean voltarParaAnterior;
 
     public TelaAvaliacoes() {
-        this(null);
-    }
-
-    public TelaAvaliacoes(JFrame telaAnterior) {
-        this.telaAnterior = telaAnterior;
-        setTitle("Gerenciar Avaliações");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(1000, 650);
-        setLocationRelativeTo(null);
-        EstiloUI.aplicarTemaJanela(this);
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosed(java.awt.event.WindowEvent e) {
-                fecharConexao();
-                if (TelaAvaliacoes.this.telaAnterior != null) {
-                    if (voltarParaAnterior) {
-                        TelaAvaliacoes.this.telaAnterior.setVisible(true);
-                    } else {
-                        TelaAvaliacoes.this.telaAnterior.dispose();
-                    }
-                }
-            }
-        });
+        setLayout(new BorderLayout());
+        setBackground(EstiloUI.COR_FUNDO);
 
         try {
             conexao = Conexao.conectar();
@@ -64,8 +41,7 @@ public class TelaAvaliacoes extends JFrame {
             jogoRepository = new JogoRepository(conexao);
             avaliacoesTabela = new ArrayList<>();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao conectar ao banco: " + e.getMessage());
-            dispose();
+            mostrarErro("Erro ao conectar ao banco: " + e.getMessage());
             return;
         }
 
@@ -73,44 +49,32 @@ public class TelaAvaliacoes extends JFrame {
         painelPrincipal.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         painelPrincipal.setBackground(EstiloUI.COR_FUNDO);
 
-        JPanel painelTopo = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        painelTopo.setBackground(EstiloUI.COR_FUNDO);
-        if (this.telaAnterior != null) {
-            JButton btnVoltar = new JButton("<- Voltar");
-            btnVoltar.setFont(new Font("Trebuchet MS", Font.PLAIN, 12));
-            btnVoltar.setForeground(new Color(190, 205, 220));
-            btnVoltar.setBackground(new Color(47, 55, 66));
-            btnVoltar.setFocusPainted(false);
-            btnVoltar.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
-            btnVoltar.addActionListener(e -> voltar());
-            painelTopo.add(btnVoltar);
-        }
-
         JPanel painelFormulario = criarPainelFormulario();
-
         JPanel painelTabela = criarPainelTabela();
-
         JPanel painelBotoes = criarPainelBotoes();
 
         JPanel painelNorte = new JPanel(new BorderLayout(0, 8));
         painelNorte.setBackground(EstiloUI.COR_FUNDO);
-        painelNorte.add(painelTopo, BorderLayout.NORTH);
         painelNorte.add(painelFormulario, BorderLayout.CENTER);
 
         painelPrincipal.add(painelNorte, BorderLayout.NORTH);
         painelPrincipal.add(painelTabela, BorderLayout.CENTER);
         painelPrincipal.add(painelBotoes, BorderLayout.SOUTH);
 
-        add(painelPrincipal);
+        add(painelPrincipal, BorderLayout.CENTER);
         carregarJogadores();
         carregarJogos();
         carregarTabela();
-        setVisible(true);
     }
 
-    private void voltar() {
-        voltarParaAnterior = true;
-        dispose();
+    private void mostrarErro(String mensagem) {
+        JPanel painel = new JPanel(new BorderLayout());
+        painel.setBackground(EstiloUI.COR_FUNDO);
+        JLabel label = new JLabel(mensagem, SwingConstants.CENTER);
+        label.setForeground(EstiloUI.COR_TEXTO);
+        label.setFont(EstiloUI.FONTE_PADRAO);
+        painel.add(label, BorderLayout.CENTER);
+        add(painel, BorderLayout.CENTER);
     }
 
     private JPanel criarPainelFormulario() {
