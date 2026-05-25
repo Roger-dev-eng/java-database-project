@@ -33,9 +33,7 @@ O sistema oferece:
 - tela de consultas com listagens, filtros, joins e agregações
 - dashboard web com KPIs, filtros dinâmicos e gráficos analíticos
 
-<img width="847" height="516" alt="593601846-10c21cdf-d2af-4520-9251-a8d20b07dbd7" src="https://github.com/user-attachments/assets/07955e4c-45cf-4185-9804-6218dd1ede28" />
-
-
+<img width="1447" height="848" alt="Captura de tela 2026-05-25 181749" src="https://github.com/user-attachments/assets/91afb1b0-b370-4af8-a3e6-8c71ab9bcc42" />
 
 ## Stack
 - Java
@@ -185,6 +183,8 @@ Essa classe delega a inicialização para a interface principal em `InterfaceSwi
 
 ## Dashboard web
 
+<img width="1446" height="847" alt="Captura de tela 2026-05-25 181807" src="https://github.com/user-attachments/assets/9c010c0a-1c03-426a-ae4e-9c3f597b2557" />
+
 Além da interface desktop em Swing, o projeto também possui um dashboard web analítico construído em Python com Streamlit.
 
 Ele foi pensado para complementar o sistema operacional com uma visualização mais gerencial dos dados cadastrados no banco.
@@ -228,27 +228,25 @@ O dashboard também pode ser aberto a partir do botão `Dashboard` no menu princ
 
 1. O usuário acessa a tela de login.
 
-<img width="579" height="339" alt="Image" src="https://github.com/user-attachments/assets/c3c14183-4427-4fa6-a5f2-0ce72a47ef9a" />
+<img width="1450" height="848" alt="Captura de tela 2026-05-25 181721" src="https://github.com/user-attachments/assets/3694d5a0-ecc9-466e-9efa-65ff1cf030f2" />
 
-2. A aplicação exibe a tela de boas-vindas.
+2. O menu principal libera acesso aos módulos.
 
-<img width="623" height="368" alt="Image" src="https://github.com/user-attachments/assets/6b7765d7-7b06-44d0-ad28-d3d9d51c2c44" />
+<img width="1447" height="848" alt="Captura de tela 2026-05-25 181749" src="https://github.com/user-attachments/assets/03d9ef53-e376-4bab-b7ec-fc1e51a483a4" />
 
-3. O menu principal libera acesso aos módulos.
+3. O botão `Dashboard` também permite abrir a visualização web analítica do sistema.
 
-<img width="847" height="516" alt="593601846-10c21cdf-d2af-4520-9251-a8d20b07dbd7" src="https://github.com/user-attachments/assets/07955e4c-45cf-4185-9804-6218dd1ede28" />
-
-4. O botão `Dashboard` também permite abrir a visualização web analítica do sistema.
+<img width="1446" height="847" alt="Captura de tela 2026-05-25 181807" src="https://github.com/user-attachments/assets/8f09195b-fd6e-4491-a6ae-9a8364de0a44" />
 
 https://github.com/user-attachments/assets/13cd62b6-8579-459e-b6a7-da05a22b7fa9
 
-5. Cada tela operacional realiza consultas e operações CRUD no banco.
+4. Cada tela operacional realiza consultas e operações CRUD no banco.
 
-<img width="1094" height="732" alt="Image" src="https://github.com/user-attachments/assets/c8c315be-7db3-4c82-ab19-9326c48690aa" />
+<img width="1453" height="850" alt="Captura de tela 2026-05-25 182552" src="https://github.com/user-attachments/assets/55b61120-ad08-4047-93dd-fa71e8a2ceee" />
 
-6. A tela "Ver Tabelas" permite executar consultas simples e avançadas.
+5. A opção "Análises" permite executar consultas simples e avançadas.
 
-<img width="1195" height="745" alt="Image" src="https://github.com/user-attachments/assets/7edc9253-f030-4012-b052-1ce4bd87fcfc" />
+<img width="1450" height="844" alt="Captura de tela 2026-05-25 182653" src="https://github.com/user-attachments/assets/a95b145c-d146-4630-82e9-ef391fa324e5" />
 
 ## Consultas disponíveis
 
@@ -259,7 +257,7 @@ Na tela `TelaVerTabelas`, o usuário pode alternar entre quatro modos:
 - `Joins`: cruzamento de dados entre tabelas relacionadas
 - `Agregacoes`: totais, médias e outras métricas
 
-<img width="1196" height="755" alt="Image" src="https://github.com/user-attachments/assets/243d22a3-de94-4759-bf3a-50730cc960b2" />
+<img width="1449" height="846" alt="Captura de tela 2026-05-25 182746" src="https://github.com/user-attachments/assets/17bd5cdb-48e2-42b9-aea7-fb6b9a7383f3" />
 
 ## Validações implementadas
 
