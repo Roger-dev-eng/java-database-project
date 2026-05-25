@@ -10,11 +10,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TelaJogadores extends JPanel {
+public class TelaJogadores extends JPanel implements ConexaoFechavel {
     private JTable tabelaJogadores;
     private DefaultTableModel modeloTabela;
     private JTextField txtNickname, txtEmail;
@@ -291,7 +290,8 @@ public class TelaJogadores extends JPanel {
         }
     }
 
-    private void fecharConexao() {
+    @Override
+    public void fecharConexao() {
         if (conexao == null) {
             return;
         }
@@ -299,8 +299,9 @@ public class TelaJogadores extends JPanel {
             if (!conexao.isClosed()) {
                 conexao.close();
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("Erro ao fechar conexao de jogadores: " + e.getMessage());
         }
     }
+
 }

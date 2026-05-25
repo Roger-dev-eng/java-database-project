@@ -8,11 +8,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TelaJogos extends JPanel {
+public class TelaJogos extends JPanel implements ConexaoFechavel {
     private JTable tabelaJogos;
     private DefaultTableModel modeloTabela;
     private JTextField txtNome, txtAno, txtDesenvolvedora, txtGenero;
@@ -265,7 +264,8 @@ public class TelaJogos extends JPanel {
         txtGenero.setText(String.valueOf(modeloTabela.getValueAt(linha, 4)));
     }
 
-    private void fecharConexao() {
+    @Override
+    public void fecharConexao() {
         if (conexao == null) {
             return;
         }
@@ -273,8 +273,9 @@ public class TelaJogos extends JPanel {
             if (!conexao.isClosed()) {
                 conexao.close();
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("Erro ao fechar conexao de jogos: " + e.getMessage());
         }
     }
+
 }

@@ -13,11 +13,10 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
 import java.sql.Date;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TelaAvaliacoes extends JPanel {
+public class TelaAvaliacoes extends JPanel implements ConexaoFechavel {
     private JTable tabelaAvaliacoes;
     private DefaultTableModel modeloTabela;
     private JTextField txtNota, txtData;
@@ -405,7 +404,8 @@ public class TelaAvaliacoes extends JPanel {
         }
     }
 
-    private void fecharConexao() {
+    @Override
+    public void fecharConexao() {
         if (conexao == null) {
             return;
         }
@@ -413,8 +413,9 @@ public class TelaAvaliacoes extends JPanel {
             if (!conexao.isClosed()) {
                 conexao.close();
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("Erro ao fechar conexao de avaliacoes: " + e.getMessage());
         }
     }
+
 }

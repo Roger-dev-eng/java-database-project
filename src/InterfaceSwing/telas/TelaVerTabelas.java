@@ -6,10 +6,9 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 
-public class TelaVerTabelas extends JPanel {
+public class TelaVerTabelas extends JPanel implements ConexaoFechavel {
     private JComboBox<String> comboModo;
     private JComboBox<String> comboTabelas;
     private JComboBox<String> comboConsulta;
@@ -248,7 +247,8 @@ public class TelaVerTabelas extends JPanel {
         }
     }
 
-    private void fecharConexao() {
+    @Override
+    public void fecharConexao() {
         if (conexao == null) {
             return;
         }
@@ -256,7 +256,7 @@ public class TelaVerTabelas extends JPanel {
             if (!conexao.isClosed()) {
                 conexao.close();
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("Erro ao fechar conexao de consultas: " + e.getMessage());
         }
     }

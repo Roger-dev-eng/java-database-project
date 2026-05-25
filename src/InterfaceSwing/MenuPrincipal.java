@@ -19,6 +19,7 @@ public class MenuPrincipal extends JFrame {
     private static final Color COR_SIDEBAR_ATIVO = new Color(24, 91, 168);
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel painelConteudo = new JPanel(cardLayout);
+    private final java.util.List<InterfaceSwing.telas.ConexaoFechavel> conexoes = new java.util.ArrayList<>();
     private final Map<String, JButton> botoesMenu = new LinkedHashMap<>();
 
     private final String nomeUsuario;
@@ -33,6 +34,12 @@ public class MenuPrincipal extends JFrame {
                 : nomeUsuario.trim();
         setTitle("Gerenciamento de Jogos");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                fecharConexoes();
+            }
+        });
         setSize(1180, 720);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -86,7 +93,7 @@ public class MenuPrincipal extends JFrame {
 
         JButton btnSair = new JButton("Sair");
         EstiloUI.estilizarBotao(btnSair, new Color(86, 98, 112));
-        btnSair.addActionListener(e -> System.exit(0));
+        btnSair.addActionListener(e -> sair());
         painelRodape.add(btnSair, BorderLayout.CENTER);
 
         sidebar.add(painelLogo, BorderLayout.NORTH);
@@ -102,11 +109,11 @@ public class MenuPrincipal extends JFrame {
 
         painelConteudo.setBackground(EstiloUI.COR_FUNDO);
         painelConteudo.add(criarBoasVindas(), "boasvindas");
-        painelConteudo.add(new TelaJogos(), "jogos");
-        painelConteudo.add(new TelaJogadores(), "jogadores");
-        painelConteudo.add(new TelaPlataformas(), "plataformas");
-        painelConteudo.add(new TelaAvaliacoes(), "avaliacoes");
-        painelConteudo.add(new TelaVerTabelas(), "analises");
+        painelConteudo.add(registrarConexao(new TelaJogos()), "jogos");
+        painelConteudo.add(registrarConexao(new TelaJogadores()), "jogadores");
+        painelConteudo.add(registrarConexao(new TelaPlataformas()), "plataformas");
+        painelConteudo.add(registrarConexao(new TelaAvaliacoes()), "avaliacoes");
+        painelConteudo.add(registrarConexao(new TelaVerTabelas()), "analises");
         painelConteudo.add(criarPainelDashboard(), "dashboard");
 
         painel.add(painelConteudo, BorderLayout.CENTER);
@@ -189,5 +196,26 @@ public class MenuPrincipal extends JFrame {
             botao.setBackground(ativo ? COR_SIDEBAR_ATIVO : COR_SIDEBAR_ITEM);
             botao.setForeground(EstiloUI.COR_TEXTO);
         }
+    }
+
+    private <T extends JPanel & InterfaceSwing.telas.ConexaoFechavel> T registrarConexao(T painel) {
+        conexoes.add(painel);
+        return painel;
+    }
+
+    private void fecharConexoes() {
+        for (InterfaceSwing.telas.ConexaoFechavel conexao : conexoes) {
+            try {
+                conexao.fecharConexao();
+            } catch (Exception e) {
+                System.err.println("Erro ao fechar conexao: " + e.getMessage());
+            }
+        }
+    }
+
+    private void sair() {
+        fecharConexoes();
+        dispose();
+        System.exit(0);
     }
 }
