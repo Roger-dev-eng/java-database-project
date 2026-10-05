@@ -52,8 +52,9 @@ public final class WebServer {
                 return;
             }
             serveStatic(exchange, path);
-        } catch (Exception exception) {
-            sendJson(exchange, 500, Map.of("error", exception.getMessage() == null ? "Erro interno." : exception.getMessage()));
+        } catch (Throwable exception) {
+            Throwable cause = exception.getCause() == null ? exception : exception.getCause();
+            sendJson(exchange, 500, Map.of("error", cause.getMessage() == null ? "Erro interno no backend Java." : cause.getMessage()));
         }
     }
 

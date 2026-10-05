@@ -11,8 +11,19 @@ const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => 
 async function api(path, options) {
   document.body.classList.add("is-loading");
   try {
-    const response = await fetch(`/api/${path}`, options || {});
-    const data = await response.json();
+    let response;
+    try {
+      response = await fetch(`/api/${path}`, options || {});
+    } catch {
+      throw new Error("O backend Java não está respondendo. Inicie o WebServer e tente novamente.");
+    }
+    const raw = await response.text();
+    let data;
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch {
+      throw new Error(`O servidor retornou uma resposta inválida (${response.status}).`);
+    }
     if (!response.ok) throw new Error(data.error || "Falha na operação.");
     return data;
   } finally {
