@@ -1,8 +1,8 @@
-# Sistema de Gerenciamento de Banco de Dados sobre Jogos
+# Sistema Web de Gerenciamento de Jogos
 
-Aplicação híbrida com interface desktop em Java Swing e dashboard web em Python Streamlit para gerenciamento e visualização analítica de jogos, jogadores, plataformas e avaliações.
+Aplicação web em Python Streamlit para gerenciamento e visualização analítica de jogos, jogadores, plataformas e avaliações, conectada ao PostgreSQL do Supabase.
 
-O projeto combina interface gráfica, operações CRUD, consultas SQL e visualização analítica, usando uma organização em camadas para separar interface, acesso a dados, validação, serviços e apresentação web.
+O site reúne login simples, operações CRUD, consultas SQL, joins, agregações e dashboard analítico em uma única interface. O código Java Swing permanece no repositório como implementação legada do cliente desktop, mas não é necessário para executar o site.
 
 ## Conteúdo
 
@@ -14,7 +14,7 @@ O projeto combina interface gráfica, operações CRUD, consultas SQL e visualiz
 - [Requisitos](#requisitos)
 - [Configuração do banco](#configuração-do-banco)
 - [Como compilar e executar](#como-compilar-e-executar)
-- [Dashboard web](#dashboard-web)
+- [Aplicação web](#aplicação-web)
 - [Supabase e deploy no Render](#supabase-e-deploy-no-render)
 - [Fluxo da aplicação](#fluxo-da-aplicação)
 - [Consultas disponíveis](#consultas-disponíveis)
@@ -38,11 +38,7 @@ O sistema oferece:
 <img width="1447" height="848" alt="Captura de tela 2026-05-25 181749" src="https://github.com/user-attachments/assets/91afb1b0-b370-4af8-a3e6-8c71ab9bcc42" />
 
 ## Stack
-- Java
-- Swing
 - PostgreSQL
-- JDBC
-- Maven
 - Python
 - Streamlit
 - Pandas
@@ -208,13 +204,11 @@ src/MenuPrincipal.java
 
 Essa classe delega a inicialização para a interface principal em `InterfaceSwing.MenuPrincipal`.
 
-## Dashboard web
+## Aplicação web
 
 <img width="1446" height="847" alt="Captura de tela 2026-05-25 181807" src="https://github.com/user-attachments/assets/9c010c0a-1c03-426a-ae4e-9c3f597b2557" />
 
-Além da interface desktop em Swing, o projeto também possui um dashboard web analítico construído em Python com Streamlit.
-
-Ele foi pensado para complementar o sistema operacional com uma visualização mais gerencial dos dados cadastrados no banco.
+O site Streamlit substitui a navegação Swing e reúne as funções operacionais e analíticas em uma única aplicação web.
 
 ### Arquivos do dashboard
 
@@ -224,12 +218,15 @@ Ele foi pensado para complementar o sistema operacional com uma visualização m
 
 ### Funcionalidades do dashboard
 
+- login simples por nome
+- CRUD de jogos, jogadores, plataformas e avaliações
+- consultas simples, filtros, joins e agregações
 - KPIs com quantidade de jogos, jogadores cadastrados, média geral das notas e plataforma mais usada
 - filtros dinâmicos por gênero, status da avaliação e faixa de ano de lançamento
 - gráficos com agregações, agrupamentos, ordenações e filtros SQL
 - ranking de jogos por volume de avaliações
 
-### Como executar manualmente
+### Como executar localmente
 
 Instale as dependências do dashboard:
 
@@ -243,12 +240,10 @@ Depois execute:
 streamlit run .\dashboard\dashboard.py
 ```
 
-O dashboard também pode ser aberto a partir do botão `Dashboard` no menu principal da aplicação Java.
-
 ### Observações importantes
 
-- o dashboard usa o mesmo banco PostgreSQL da aplicação desktop
-- ele depende das variáveis `DB_URL`, `DB_USER` e `DB_PASSWORD`
+- o site usa o banco PostgreSQL do Supabase
+- ele usa `SUPABASE_DB_URL` no Render, ou `DB_URL`, `DB_USER` e `DB_PASSWORD` para compatibilidade local
 - as dependências Python do dashboard não ficam no `pom.xml`, porque pertencem a outro ecossistema
 
 ## Supabase e deploy no Render

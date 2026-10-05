@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import os
-from typing import Dict, Iterable, Tuple
+from datetime import date
+from typing import Any, Dict, Iterable, Tuple
 from urllib.parse import parse_qs, unquote, urlparse
 
 import pandas as pd
@@ -78,6 +79,286 @@ def carregar_dataframe(sql: str, params: Tuple | None = None) -> pd.DataFrame:
             return pd.read_sql_query(sql, conexao, params=params)
 
 
+def executar_comando(sql: str, params: Tuple | None = None) -> None:
+    with criar_conexao() as conexao:
+        with conexao.cursor() as cursor:
+            cursor.execute(sql, params or ())
+        conexao.commit()
+
+
+def opcoes_chave(sql: str, coluna_id: str, coluna_nome: str) -> list[tuple[int, str]]:
+    df = carregar_dataframe(sql)
+    return [(int(row[coluna_id]), str(row[coluna_nome])) for _, row in df.iterrows()]
+
+
+def mostrar_mensagem_operacao(mensagem: str, sucesso: bool = True) -> None:
+    if sucesso:
+        st.success(mensagem)
+        st.cache_data.clear()
+    else:
+        st.error(mensagem)
+
+
+def renderizar_jogos() -> None:
+    st.title("Jogos")
+    dados = carregar_dataframe(
+        """
+        SELECT id_jogo, nome, ano_lancamento, desenvolvedora, genero
+        FROM jogos ORDER BY id_jogo
+        """
+    )
+    st.dataframe(dados, use_container_width=True, hide_index=True)
+
+    aba_novo, aba_editar, aba_excluir = st.tabs(["Novo jogo", "Editar jogo", "Excluir jogo"])
+    with aba_novo:
+        with st.form("novo_jogo"):
+            nome = st.text_input("Nome")
+            ano = st.number_input("Ano de lançamento", min_value=0, max_value=3000, value=2026, step=1)
+            desenvolvedora = st.text_input("Desenvolvedora")
+            genero = st.text_input("Gênero")
+            enviado = st.form_submit_button("Salvar jogo", type="primary")
+        if enviado:
+            if not nome.strip() or not desenvolvedora.strip() or not genero.strip():
+                mostrar_mensagem_operacao("Preencha nome, desenvolvedora e gênero.", False)
+            else:
+                try:
+                    executar_comando(
+                        "INSERT INTO jogos (nome, ano_lancamento, desenvolvedora, genero) VALUES (%s, %s, %s, %s)",
+                        (nome.strip(), int(ano), desenvolvedora.strip(), genero.strip()),
+                    )
+                    mostrar_mensagem_operacao("Jogo cadastrado.")
+                except Exception as exc:
+                    mostrar_mensagem_operacao(f"Não foi possível cadastrar o jogo: {exc}", False)
+
+    with aba_editar:
+        if dados.empty:
+            st.info("Cadastre um jogo antes de editar.")
+        else:
+            registros = {f"{row.nome} (ID {row.id_jogo})": row for row in dados.itertuples()}
+            escolhido = st.selectbox("Jogo", list(registros), key="jogo_editar")
+            registro = registros[escolhido]
+            with st.form("editar_jogo"):
+                nome = st.text_input("Nome", value=str(registro.nome))
+                ano = st.number_input("Ano de lançamento", min_value=0, max_value=3000, value=int(registro.ano_lancamento or 0), step=1)
+                desenvolvedora = st.text_input("Desenvolvedora", value=str(registro.desenvolvedora or ""))
+                genero = st.text_input("Gênero", value=str(registro.genero or ""))
+                enviado = st.form_submit_button("Salvar alterações", type="primary")
+            if enviado:
+                try:
+                    executar_comando(
+                        "UPDATE jogos SET nome=%s, ano_lancamento=%s, desenvolvedora=%s, genero=%s WHERE id_jogo=%s",
+                        (nome.strip(), int(ano), desenvolvedora.strip(), genero.strip(), int(registro.id_jogo)),
+                    )
+                    mostrar_mensagem_operacao("Jogo atualizado.")
+                except Exception as exc:
+                    mostrar_mensagem_operacao(f"Não foi possível atualizar o jogo: {exc}", False)
+
+    with aba_excluir:
+        if dados.empty:
+            st.info("Não há jogos para excluir.")
+        else:
+            registros = {f"{row.nome} (ID {row.id_jogo})": row for row in dados.itertuples()}
+            escolhido = st.selectbox("Jogo", list(registros), key="jogo_excluir")
+            if st.button("Excluir jogo", type="secondary"):
+                try:
+                    executar_comando("DELETE FROM jogos WHERE id_jogo=%s", (int(registros[escolhido].id_jogo),))
+                    mostrar_mensagem_operacao("Jogo excluído.")
+                except Exception as exc:
+                    mostrar_mensagem_operacao(f"Não foi possível excluir o jogo. Verifique os relacionamentos: {exc}", False)
+
+
+def renderizar_jogadores() -> None:
+    st.title("Jogadores")
+    jogos = opcoes_chave("SELECT id_jogo, nome FROM jogos ORDER BY nome", "id_jogo", "nome")
+    dados = carregar_dataframe(
+        """
+        SELECT jg.id_jogador, jg.nickname, jg.email, jg.fk_jogo, j.nome AS jogo
+        FROM jogadores jg LEFT JOIN jogos j ON j.id_jogo = jg.fk_jogo
+        ORDER BY jg.id_jogador
+        """
+    )
+    st.dataframe(dados, use_container_width=True, hide_index=True)
+    aba_novo, aba_editar, aba_excluir = st.tabs(["Novo jogador", "Editar jogador", "Excluir jogador"])
+    if not jogos:
+        st.warning("Cadastre um jogo antes de cadastrar jogadores.")
+        return
+    nomes_jogos = [nome for _, nome in jogos]
+    ids_jogos = {nome: identificador for identificador, nome in jogos}
+    with aba_novo:
+        with st.form("novo_jogador"):
+            nickname = st.text_input("Nickname")
+            email = st.text_input("E-mail")
+            jogo = st.selectbox("Jogo associado", nomes_jogos)
+            enviado = st.form_submit_button("Salvar jogador", type="primary")
+        if enviado:
+            if not nickname.strip():
+                mostrar_mensagem_operacao("Informe o nickname.", False)
+            else:
+                try:
+                    executar_comando("INSERT INTO jogadores (nickname, email, fk_jogo) VALUES (%s, %s, %s)", (nickname.strip(), email.strip() or None, ids_jogos[jogo]))
+                    mostrar_mensagem_operacao("Jogador cadastrado.")
+                except Exception as exc:
+                    mostrar_mensagem_operacao(f"Não foi possível cadastrar o jogador: {exc}", False)
+    if dados.empty:
+        return
+    registros = {f"{row.nickname} (ID {row.id_jogador})": row for row in dados.itertuples()}
+    with aba_editar:
+        escolhido = st.selectbox("Jogador", list(registros), key="jogador_editar")
+        registro = registros[escolhido]
+        jogo_atual = next((nome for identificador, nome in jogos if identificador == registro.fk_jogo), nomes_jogos[0])
+        with st.form("editar_jogador"):
+            nickname = st.text_input("Nickname", value=str(registro.nickname))
+            email = st.text_input("E-mail", value=str(registro.email or ""))
+            jogo = st.selectbox("Jogo associado", nomes_jogos, index=nomes_jogos.index(jogo_atual))
+            enviado = st.form_submit_button("Salvar alterações", type="primary")
+        if enviado:
+            try:
+                executar_comando("UPDATE jogadores SET nickname=%s, email=%s, fk_jogo=%s WHERE id_jogador=%s", (nickname.strip(), email.strip() or None, ids_jogos[jogo], int(registro.id_jogador)))
+                mostrar_mensagem_operacao("Jogador atualizado.")
+            except Exception as exc:
+                mostrar_mensagem_operacao(f"Não foi possível atualizar o jogador: {exc}", False)
+    with aba_excluir:
+        escolhido = st.selectbox("Jogador", list(registros), key="jogador_excluir")
+        if st.button("Excluir jogador"):
+            try:
+                executar_comando("DELETE FROM jogadores WHERE id_jogador=%s", (int(registros[escolhido].id_jogador),))
+                mostrar_mensagem_operacao("Jogador excluído.")
+            except Exception as exc:
+                mostrar_mensagem_operacao(f"Não foi possível excluir o jogador. Verifique as plataformas e avaliações relacionadas: {exc}", False)
+
+
+def renderizar_plataformas() -> None:
+    st.title("Plataformas")
+    jogadores = opcoes_chave("SELECT id_jogador, nickname FROM jogadores ORDER BY nickname", "id_jogador", "nickname")
+    dados = carregar_dataframe(
+        """
+        SELECT p.id_plataforma, p.nome, p.horas_jogadas, p.ultima_sessao,
+               p.fk_jogador, j.nickname AS jogador
+        FROM plataformas p LEFT JOIN jogadores j ON j.id_jogador = p.fk_jogador
+        ORDER BY p.id_plataforma
+        """
+    )
+    st.dataframe(dados, use_container_width=True, hide_index=True)
+    if not jogadores:
+        st.warning("Cadastre um jogador antes de cadastrar plataformas.")
+        return
+    nomes = [nome for _, nome in jogadores]
+    ids = {nome: identificador for identificador, nome in jogadores}
+    aba_novo, aba_editar, aba_excluir = st.tabs(["Nova plataforma", "Editar plataforma", "Excluir plataforma"])
+    with aba_novo:
+        with st.form("nova_plataforma"):
+            nome = st.text_input("Nome")
+            horas = st.number_input("Horas jogadas", min_value=0, value=0, step=1)
+            jogador = st.selectbox("Jogador associado", nomes)
+            enviado = st.form_submit_button("Salvar plataforma", type="primary")
+        if enviado:
+            try:
+                executar_comando("INSERT INTO plataformas (nome, horas_jogadas, fk_jogador) VALUES (%s, %s, %s)", (nome.strip(), int(horas), ids[jogador]))
+                mostrar_mensagem_operacao("Plataforma cadastrada.")
+            except Exception as exc:
+                mostrar_mensagem_operacao(f"Não foi possível cadastrar a plataforma: {exc}", False)
+    if dados.empty:
+        return
+    registros = {f"{row.nome} (ID {row.id_plataforma})": row for row in dados.itertuples()}
+    with aba_editar:
+        escolhido = st.selectbox("Plataforma", list(registros), key="plataforma_editar")
+        registro = registros[escolhido]
+        jogador_atual = next((nome for identificador, nome in jogadores if identificador == registro.fk_jogador), nomes[0])
+        with st.form("editar_plataforma"):
+            nome = st.text_input("Nome", value=str(registro.nome or ""))
+            horas = st.number_input("Horas jogadas", min_value=0, value=int(registro.horas_jogadas or 0), step=1)
+            jogador = st.selectbox("Jogador associado", nomes, index=nomes.index(jogador_atual))
+            enviado = st.form_submit_button("Salvar alterações", type="primary")
+        if enviado:
+            try:
+                executar_comando("UPDATE plataformas SET nome=%s, horas_jogadas=%s, fk_jogador=%s WHERE id_plataforma=%s", (nome.strip(), int(horas), ids[jogador], int(registro.id_plataforma)))
+                mostrar_mensagem_operacao("Plataforma atualizada.")
+            except Exception as exc:
+                mostrar_mensagem_operacao(f"Não foi possível atualizar a plataforma: {exc}", False)
+    with aba_excluir:
+        escolhido = st.selectbox("Plataforma", list(registros), key="plataforma_excluir")
+        if st.button("Excluir plataforma"):
+            try:
+                executar_comando("DELETE FROM plataformas WHERE id_plataforma=%s", (int(registros[escolhido].id_plataforma),))
+                mostrar_mensagem_operacao("Plataforma excluída.")
+            except Exception as exc:
+                mostrar_mensagem_operacao(f"Não foi possível excluir a plataforma: {exc}", False)
+
+
+def renderizar_avaliacoes() -> None:
+    st.title("Avaliações")
+    jogadores = opcoes_chave("SELECT id_jogador, nickname FROM jogadores ORDER BY nickname", "id_jogador", "nickname")
+    jogos = opcoes_chave("SELECT id_jogo, nome FROM jogos ORDER BY nome", "id_jogo", "nome")
+    dados = carregar_dataframe(
+        """
+        SELECT a.id_avaliacao, a.nota, a.comentario, a.status, a.data_avaliacao,
+               a.fk_jogador, a.fk_jogo, jg.nickname AS jogador, j.nome AS jogo
+        FROM avaliacoes a
+        LEFT JOIN jogadores jg ON jg.id_jogador = a.fk_jogador
+        LEFT JOIN jogos j ON j.id_jogo = a.fk_jogo
+        ORDER BY a.id_avaliacao
+        """
+    )
+    st.dataframe(dados, use_container_width=True, hide_index=True)
+    if not jogadores or not jogos:
+        st.warning("Cadastre pelo menos um jogador e um jogo antes de cadastrar avaliações.")
+        return
+    nomes_jogadores = [nome for _, nome in jogadores]
+    ids_jogadores = {nome: identificador for identificador, nome in jogadores}
+    nomes_jogos = [nome for _, nome in jogos]
+    ids_jogos = {nome: identificador for identificador, nome in jogos}
+    status_opcoes = ["Pendente", "Completa", "Revisada"]
+    aba_novo, aba_editar, aba_excluir = st.tabs(["Nova avaliação", "Editar avaliação", "Excluir avaliação"])
+    with aba_novo:
+        with st.form("nova_avaliacao"):
+            jogador = st.selectbox("Jogador", nomes_jogadores)
+            jogo = st.selectbox("Jogo", nomes_jogos)
+            nota = st.number_input("Nota", min_value=0, max_value=10, value=0, step=1)
+            status = st.selectbox("Status", status_opcoes)
+            data_avaliacao = st.date_input("Data", value=date.today())
+            comentario = st.text_area("Comentário")
+            enviado = st.form_submit_button("Salvar avaliação", type="primary")
+        if enviado:
+            try:
+                executar_comando("INSERT INTO avaliacoes (nota, comentario, status, data_avaliacao, fk_jogador, fk_jogo) VALUES (%s, %s, %s, %s, %s, %s)", (int(nota), comentario.strip() or None, status, data_avaliacao, ids_jogadores[jogador], ids_jogos[jogo]))
+                mostrar_mensagem_operacao("Avaliação cadastrada.")
+            except Exception as exc:
+                mostrar_mensagem_operacao(f"Não foi possível cadastrar a avaliação: {exc}", False)
+    if dados.empty:
+        return
+    registros = {f"{row.jogo} por {row.jogador} (ID {row.id_avaliacao})": row for row in dados.itertuples()}
+    with aba_editar:
+        escolhido = st.selectbox("Avaliação", list(registros), key="avaliacao_editar")
+        registro = registros[escolhido]
+        jogador_atual = next((nome for identificador, nome in jogadores if identificador == registro.fk_jogador), nomes_jogadores[0])
+        jogo_atual = next((nome for identificador, nome in jogos if identificador == registro.fk_jogo), nomes_jogos[0])
+        status_atual = str(registro.status or status_opcoes[0])
+        with st.form("editar_avaliacao"):
+            jogador = st.selectbox("Jogador", nomes_jogadores, index=nomes_jogadores.index(jogador_atual))
+            jogo = st.selectbox("Jogo", nomes_jogos, index=nomes_jogos.index(jogo_atual))
+            nota = st.number_input("Nota", min_value=0, max_value=10, value=int(registro.nota or 0), step=1)
+            status = st.selectbox("Status", status_opcoes, index=status_opcoes.index(status_atual) if status_atual in status_opcoes else 0)
+            data_avaliacao = st.date_input("Data", value=registro.data_avaliacao or date.today())
+            comentario = st.text_area("Comentário", value=str(registro.comentario or ""))
+            enviado = st.form_submit_button("Salvar alterações", type="primary")
+        if enviado:
+            try:
+                with criar_conexao() as conexao:
+                    with conexao.cursor() as cursor:
+                        cursor.execute("UPDATE avaliacoes SET nota=%s, comentario=%s, data_avaliacao=%s, fk_jogador=%s, fk_jogo=%s WHERE id_avaliacao=%s", (int(nota), comentario.strip() or None, data_avaliacao, ids_jogadores[jogador], ids_jogos[jogo], int(registro.id_avaliacao)))
+                        cursor.execute("CALL pr_atualizar_status_avaliacao(%s, %s)", (int(registro.id_avaliacao), status))
+                    conexao.commit()
+                mostrar_mensagem_operacao("Avaliação atualizada.")
+            except Exception as exc:
+                mostrar_mensagem_operacao(f"Não foi possível atualizar a avaliação: {exc}", False)
+    with aba_excluir:
+        escolhido = st.selectbox("Avaliação", list(registros), key="avaliacao_excluir")
+        if st.button("Excluir avaliação"):
+            try:
+                executar_comando("DELETE FROM avaliacoes WHERE id_avaliacao=%s", (int(registros[escolhido].id_avaliacao),))
+                mostrar_mensagem_operacao("Avaliação excluída.")
+            except Exception as exc:
+                mostrar_mensagem_operacao(f"Não foi possível excluir a avaliação: {exc}", False)
 def clausulas_filtro(
     generos: Iterable[str],
     status: Iterable[str],
@@ -487,9 +768,139 @@ def renderizar_dashboard() -> None:
     )
 
 
+def renderizar_consultas() -> None:
+    st.title("Consultas e análises")
+    entidade = st.selectbox("Tabela", ["Jogos", "Jogadores", "Plataformas", "Avaliações"])
+    modo = st.selectbox("Modo", ["Simples", "Filtros", "Joins", "Agregações"])
+    sql = ""
+    params: tuple[Any, ...] = ()
+
+    if entidade == "Jogos" and modo == "Simples":
+        consulta = st.selectbox("Consulta", ["Listar todos", "Buscar por ID", "Buscar por nome"])
+        if consulta == "Buscar por ID":
+            sql = "SELECT id_jogo, nome, ano_lancamento, desenvolvedora, genero FROM jogos WHERE id_jogo=%s"
+            params = (st.number_input("ID do jogo", min_value=1, step=1),)
+        elif consulta == "Buscar por nome":
+            sql = "SELECT id_jogo, nome, ano_lancamento, desenvolvedora, genero FROM jogos WHERE nome ILIKE %s ORDER BY nome"
+            params = (f"%{st.text_input('Nome do jogo')}%",)
+        else:
+            sql = "SELECT id_jogo, nome, ano_lancamento, desenvolvedora, genero FROM jogos ORDER BY id_jogo"
+    elif entidade == "Jogos" and modo == "Filtros":
+        filtro = st.text_input("Gênero")
+        ano = st.number_input("Ano (0 para ignorar)", min_value=0, max_value=3000, value=0, step=1)
+        sql = "SELECT id_jogo, nome, ano_lancamento, desenvolvedora, genero FROM jogos WHERE (%s = '' OR genero ILIKE %s) AND (%s = 0 OR ano_lancamento = %s) ORDER BY nome"
+        params = (filtro, f"%{filtro}%", int(ano), int(ano))
+    elif entidade == "Jogos" and modo == "Joins":
+        sql = "SELECT j.id_jogo, j.nome AS jogo, jg.nickname AS jogador FROM jogos j LEFT JOIN jogadores jg ON jg.fk_jogo=j.id_jogo ORDER BY j.nome, jg.nickname"
+    elif entidade == "Jogos" and modo == "Agregações":
+        consulta = st.selectbox("Agregação", ["Total", "Por gênero", "Mais avaliados"])
+        if consulta == "Total":
+            sql = "SELECT COUNT(*) AS total_jogos FROM jogos"
+        elif consulta == "Por gênero":
+            sql = "SELECT genero, COUNT(*) AS total FROM jogos GROUP BY genero ORDER BY total DESC"
+        else:
+            sql = "SELECT j.nome, COUNT(a.id_avaliacao) AS total_avaliacoes FROM jogos j LEFT JOIN avaliacoes a ON a.fk_jogo=j.id_jogo GROUP BY j.id_jogo, j.nome ORDER BY total_avaliacoes DESC"
+    elif entidade == "Jogadores" and modo == "Simples":
+        consulta = st.selectbox("Consulta", ["Listar todos", "Buscar por ID", "Buscar por nickname"])
+        if consulta == "Buscar por ID":
+            sql = "SELECT id_jogador, nickname, email, fk_jogo FROM jogadores WHERE id_jogador=%s"
+            params = (st.number_input("ID do jogador", min_value=1, step=1),)
+        elif consulta == "Buscar por nickname":
+            sql = "SELECT id_jogador, nickname, email, fk_jogo FROM jogadores WHERE nickname ILIKE %s ORDER BY nickname"
+            params = (f"%{st.text_input('Nickname')}%",)
+        else:
+            sql = "SELECT id_jogador, nickname, email, fk_jogo FROM jogadores ORDER BY id_jogador"
+    elif entidade == "Jogadores" and modo == "Filtros":
+        nickname = st.text_input("Nickname")
+        sql = "SELECT id_jogador, nickname, email, fk_jogo FROM jogadores WHERE nickname ILIKE %s ORDER BY nickname"
+        params = (f"%{nickname}%",)
+    elif entidade == "Jogadores" and modo == "Joins":
+        sql = "SELECT jg.id_jogador, jg.nickname, jg.email, j.nome AS jogo FROM jogadores jg LEFT JOIN jogos j ON j.id_jogo=jg.fk_jogo ORDER BY jg.nickname"
+    elif entidade == "Jogadores" and modo == "Agregações":
+        consulta = st.selectbox("Agregação", ["Total", "Por jogo"])
+        sql = "SELECT COUNT(*) AS total_jogadores FROM jogadores" if consulta == "Total" else "SELECT COALESCE(j.nome, 'Sem jogo') AS jogo, COUNT(jg.id_jogador) AS total FROM jogadores jg LEFT JOIN jogos j ON j.id_jogo=jg.fk_jogo GROUP BY j.nome ORDER BY total DESC"
+    elif entidade == "Plataformas" and modo == "Simples":
+        consulta = st.selectbox("Consulta", ["Listar todas", "Buscar por ID", "Buscar por nome"])
+        if consulta == "Buscar por ID":
+            sql = "SELECT id_plataforma, nome, horas_jogadas, ultima_sessao, fk_jogador FROM plataformas WHERE id_plataforma=%s"
+            params = (st.number_input("ID da plataforma", min_value=1, step=1),)
+        elif consulta == "Buscar por nome":
+            sql = "SELECT id_plataforma, nome, horas_jogadas, ultima_sessao, fk_jogador FROM plataformas WHERE nome ILIKE %s ORDER BY nome"
+            params = (f"%{st.text_input('Nome da plataforma')}%",)
+        else:
+            sql = "SELECT id_plataforma, nome, horas_jogadas, ultima_sessao, fk_jogador FROM plataformas ORDER BY id_plataforma"
+    elif entidade == "Plataformas" and modo == "Filtros":
+        nome = st.text_input("Nome")
+        sql = "SELECT id_plataforma, nome, horas_jogadas, ultima_sessao, fk_jogador FROM plataformas WHERE nome ILIKE %s ORDER BY nome"
+        params = (f"%{nome}%",)
+    elif entidade == "Plataformas" and modo == "Joins":
+        sql = "SELECT p.id_plataforma, p.nome AS plataforma, p.horas_jogadas, jg.nickname AS jogador, j.nome AS jogo FROM plataformas p LEFT JOIN jogadores jg ON jg.id_jogador=p.fk_jogador LEFT JOIN jogos j ON j.id_jogo=jg.fk_jogo ORDER BY p.nome"
+    elif entidade == "Plataformas" and modo == "Agregações":
+        consulta = st.selectbox("Agregação", ["Total", "Média de horas"])
+        sql = "SELECT COUNT(*) AS total_plataformas FROM plataformas" if consulta == "Total" else "SELECT ROUND(AVG(horas_jogadas), 2) AS media_horas FROM plataformas"
+    elif entidade == "Avaliações" and modo == "Simples":
+        consulta = st.selectbox("Consulta", ["Listar todas", "Buscar por ID"])
+        if consulta == "Buscar por ID":
+            sql = "SELECT id_avaliacao, nota, comentario, status, data_avaliacao, fk_jogador, fk_jogo FROM avaliacoes WHERE id_avaliacao=%s"
+            params = (st.number_input("ID da avaliação", min_value=1, step=1),)
+        else:
+            sql = "SELECT id_avaliacao, nota, comentario, status, data_avaliacao, fk_jogador, fk_jogo FROM avaliacoes ORDER BY id_avaliacao"
+    elif entidade == "Avaliações" and modo == "Filtros":
+        nota = st.number_input("Nota (-1 para ignorar)", min_value=-1, max_value=10, value=-1, step=1)
+        status = st.text_input("Status")
+        sql = "SELECT id_avaliacao, nota, comentario, status, data_avaliacao, fk_jogador, fk_jogo FROM avaliacoes WHERE (%s < 0 OR nota=%s) AND (%s = '' OR status ILIKE %s) ORDER BY id_avaliacao"
+        params = (int(nota), int(nota), status, f"%{status}%")
+    elif entidade == "Avaliações" and modo == "Joins":
+        sql = "SELECT a.id_avaliacao, a.nota, a.status, a.data_avaliacao, jg.nickname AS jogador, j.nome AS jogo FROM avaliacoes a LEFT JOIN jogadores jg ON jg.id_jogador=a.fk_jogador LEFT JOIN jogos j ON j.id_jogo=a.fk_jogo ORDER BY a.id_avaliacao"
+    else:
+        consulta = st.selectbox("Agregação", ["Total", "Média por jogo"])
+        sql = "SELECT COUNT(*) AS total_avaliacoes FROM avaliacoes" if consulta == "Total" else "SELECT j.nome AS jogo, ROUND(AVG(a.nota), 2) AS media FROM avaliacoes a JOIN jogos j ON j.id_jogo=a.fk_jogo GROUP BY j.nome ORDER BY media DESC"
+
+    if st.button("Executar consulta", type="primary"):
+        try:
+            st.dataframe(carregar_dataframe(sql, params), use_container_width=True, hide_index=True)
+        except Exception as exc:
+            st.error(f"Não foi possível executar a consulta: {exc}")
+
+
+def renderizar_login() -> bool:
+    if st.session_state.get("usuario"):
+        return True
+    st.title("Sistema de Jogos")
+    st.caption("Acesse o gerenciamento de jogos, jogadores, plataformas e avaliações.")
+    with st.form("login"):
+        nome = st.text_input("Seu nome")
+        entrar = st.form_submit_button("Entrar", type="primary")
+    if entrar:
+        if nome.strip():
+            st.session_state["usuario"] = nome.strip()
+            st.rerun()
+        st.error("Informe seu nome para continuar.")
+    return False
+
+
 def main() -> None:
     try:
-        renderizar_dashboard()
+        if not renderizar_login():
+            return
+        st.sidebar.title("Sistema de Jogos")
+        st.sidebar.caption(f"Usuário: {st.session_state['usuario']}")
+        pagina = st.sidebar.radio(
+            "Navegação",
+            ["Dashboard", "Jogos", "Jogadores", "Plataformas", "Avaliações", "Consultas"],
+        )
+        if st.sidebar.button("Sair"):
+            st.session_state.pop("usuario", None)
+            st.rerun()
+        paginas = {
+            "Dashboard": renderizar_dashboard,
+            "Jogos": renderizar_jogos,
+            "Jogadores": renderizar_jogadores,
+            "Plataformas": renderizar_plataformas,
+            "Avaliações": renderizar_avaliacoes,
+            "Consultas": renderizar_consultas,
+        }
+        paginas[pagina]()
     except Exception as exc:
         st.error("Nao foi possivel carregar o dashboard.")
         st.exception(exc)
