@@ -76,19 +76,32 @@ public final class WebServer {
             sendJson(exchange, 200, dashboard());
             return;
         }
+        if ("consultas".equals(resource) && "GET".equals(exchange.getRequestMethod())) {
+            Map<String, String> query = queryParameters(exchange.getRequestURI());
+            String tabela = query.getOrDefault("tabela", "Jogos");
+            String modo = query.getOrDefault("modo", "Simples");
+            String consulta = query.getOrDefault("consulta", "Listar todos");
+            sendJson(exchange, 200, new WebQueryService().executar(tabela, modo, consulta, query.get("parametro")));
+            return;
+        }
         Resource definition = Resource.from(resource);
         if (definition == null) {
             sendJson(exchange, 404, Map.of("error", "Recurso não encontrado."));
             return;
         }
         Integer id = parts.length > 1 ? Integer.valueOf(parts[1]) : null;
-        try (Connection connection = Database.conectar()) {
-            if ("GET".equals(exchange.getRequestMethod())) sendJson(exchange, 200, query(connection, definition.select));
-            else if ("POST".equals(exchange.getRequestMethod())) { insert(connection, definition, readJson(exchange)); sendJson(exchange, 201, Map.of("ok", true)); }
-            else if ("PUT".equals(exchange.getRequestMethod()) && id != null) { update(connection, definition, id, readJson(exchange)); sendJson(exchange, 200, Map.of("ok", true)); }
-            else if ("DELETE".equals(exchange.getRequestMethod()) && id != null) { delete(connection, definition, id); sendJson(exchange, 200, Map.of("ok", true)); }
-            else sendJson(exchange, 405, Map.of("error", "Método não permitido."));
-        }
+        WebCrudService crud = new WebCrudService();
+        if ("GET".equals(exchange.getRequestMethod())) sendJson(exchange, 200, crud.listar(resource));
+        else if ("POST".equals(exchange.getRequestMethod())) { crud.criar(resource, stringData(readJson(exchange))); sendJson(exchange, 201, Map.of("ok", true)); }
+        else if ("PUT".equals(exchange.getRequestMethod()) && id != null) { crud.atualizar(resource, id, stringData(readJson(exchange))); sendJson(exchange, 200, Map.of("ok", true)); }
+        else if ("DELETE".equals(exchange.getRequestMethod()) && id != null) { crud.deletar(resource, id); sendJson(exchange, 200, Map.of("ok", true)); }
+        else sendJson(exchange, 405, Map.of("error", "Método não permitido."));
+    }
+
+    private static Map<String, String> stringData(JsonObject data) {
+        Map<String, String> values = new LinkedHashMap<>();
+        for (String key : data.keySet()) values.put(key, data.get(key).isJsonNull() ? null : data.get(key).getAsString());
+        return values;
     }
 
     private static void insert(Connection connection, Resource resource, JsonObject data) throws SQLException {
@@ -166,15 +179,26 @@ public final class WebServer {
             Map<String, Object> data = new LinkedHashMap<>();
             data.put("jogos", query(connection, "SELECT COUNT(*) AS total FROM jogos"));
             data.put("jogadores", query(connection, "SELECT COUNT(*) AS total FROM jogadores"));
-            data.put("media", query(connection, "SELECT COALESCE(ROUND(AVG(nota), 2), 0) AS total FROM avaliacoes"));
+            data.put("media", query(connection, "SELECT COALESCE(ROUND(AVG(fn_media_jogo(id_jogo)), 2), 0) AS total FROM jogos"));
             data.put("generos", query(connection, "SELECT COALESCE(genero, 'Sem gênero') AS nome, COUNT(*) AS total FROM jogos GROUP BY genero ORDER BY total DESC"));
-            data.put("ranking", query(connection, "SELECT j.nome, COUNT(a.id_avaliacao) AS total FROM jogos j LEFT JOIN avaliacoes a ON a.fk_jogo=j.id_jogo GROUP BY j.id_jogo, j.nome ORDER BY total DESC LIMIT 10"));
+            data.put("ranking", query(connection, "SELECT nome, quantidade_avaliacoes AS total FROM vw_resumo_jogos ORDER BY quantidade_avaliacoes DESC, nome LIMIT 10"));
             return data;
         }
     }
 
     private static JsonObject readJson(HttpExchange exchange) throws IOException {
         try (InputStream input = exchange.getRequestBody()) { return JsonParser.parseString(new String(input.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject(); }
+    }
+
+    private static Map<String, String> queryParameters(URI uri) {
+        Map<String, String> values = new LinkedHashMap<>();
+        String query = uri.getRawQuery();
+        if (query == null) return values;
+        for (String part : query.split("&")) {
+            String[] pair = part.split("=", 2);
+            values.put(java.net.URLDecoder.decode(pair[0], StandardCharsets.UTF_8), pair.length > 1 ? java.net.URLDecoder.decode(pair[1], StandardCharsets.UTF_8) : "");
+        }
+        return values;
     }
 
     private static void sendJson(HttpExchange exchange, int status, Object value) throws IOException { sendText(exchange, status, JSON.toJson(value), "application/json; charset=UTF-8"); }

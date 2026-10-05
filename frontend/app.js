@@ -122,7 +122,10 @@ async function renderQueries() {
   element("#run-query").onclick = async () => {
     const resource = element("#query-resource").value;
     const term = element("#query-term").value.toLowerCase();
-    const rows = (await api(resource)).filter((row) => !term || Object.values(row).some((value) => String(value ?? "").toLowerCase().includes(term)));
+    const names = { jogos: "Jogos", jogadores: "Jogadores", plataformas: "Plataformas", avaliacoes: "Avaliacoes" };
+    const consulta = term ? "Buscar por nome" : "Listar todos";
+    const url = `consultas?tabela=${encodeURIComponent(names[resource])}&modo=Simples&consulta=${encodeURIComponent(consulta)}&parametro=${encodeURIComponent(term)}`;
+    const rows = await api(url);
     element("#query-result").innerHTML = `<pre>${escapeHtml(JSON.stringify(rows, null, 2))}</pre>`;
   };
 }
