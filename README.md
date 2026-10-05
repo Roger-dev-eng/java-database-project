@@ -1,8 +1,8 @@
 # Sistema Web de Gerenciamento de Jogos
 
-Aplicação web em Python Streamlit para gerenciamento e visualização analítica de jogos, jogadores, plataformas e avaliações, conectada ao PostgreSQL do Supabase.
+Aplicação web em Java com frontend HTML, CSS e JavaScript para gerenciamento e visualização analítica de jogos, jogadores, plataformas e avaliações, conectada ao PostgreSQL do Supabase.
 
-O site reúne login simples, operações CRUD, consultas SQL, joins, agregações e dashboard analítico em uma única interface. O código Java Swing permanece no repositório como implementação legada do cliente desktop, mas não é necessário para executar o site.
+O site reúne login simples, operações CRUD, consultas SQL, joins, agregações e dashboard analítico em uma única interface. O código Java Swing e o dashboard Streamlit permanecem no repositório como implementações legadas, mas não são necessários para executar o site atual.
 
 ## Conteúdo
 
@@ -38,12 +38,13 @@ O sistema oferece:
 <img width="1447" height="848" alt="Captura de tela 2026-05-25 181749" src="https://github.com/user-attachments/assets/91afb1b0-b370-4af8-a3e6-8c71ab9bcc42" />
 
 ## Stack
-- PostgreSQL
-- Python
-- Streamlit
-- Pandas
-- Plotly
-- Psycopg
+- Java 21
+- Maven
+- Java HTTP Server
+- JDBC
+- PostgreSQL / Supabase
+- HTML, CSS e JavaScript
+- Docker
 
 ## Estrutura do projeto
 
@@ -67,6 +68,10 @@ src/
   app/
     db/
       Database.java
+    web/
+      WebServer.java
+      WebCrudService.java
+      WebQueryService.java
     model/
       Jogo.java
       Jogador.java
@@ -83,26 +88,25 @@ src/
     validation/
       Validator.java
       ValidationException.java
-  ddl/
-    Tabelas.java
-  dml/
-    Insert.java
-    Update.java
-    Delete.java
-dql/
-    jogos/
-    jogadores/
-    plataformas/
-    avaliacoes/
-dashboard/
-  app.py
-  dashboard.py
-  requirements.txt
+frontend/
+  index.html
+  app.js
+  styles.css
+  overview.css
+Dockerfile
+render.yaml
 database/
   ddl/
     01_schema.sql
   dml/
+    Insert.java
+    Update.java
+    Delete.java
   dql/
+    jogos/
+    jogadores/
+    plataformas/
+    avaliacoes/
   views/
     01_view_resumo_jogos.sql
   functions/
@@ -115,7 +119,7 @@ database/
 
 O código está organizado em camadas e módulos com responsabilidades bem definidas. A ideia central é separar interface, regras de aplicação, validação e acesso ao banco para reduzir acoplamento e facilitar manutenção.
 
-- `InterfaceSwing`: concentra as telas, componentes visuais, navegação entre janelas e captura das ações do usuário.
+- `app.web`: expõe o backend HTTP Java, integra o frontend e encaminha CRUDs e consultas para as camadas da aplicação.
 - `app.model`: define as entidades de domínio usadas no sistema, como `Jogo`, `Jogador`, `Plataforma` e `Avaliacao`. Essas classes representam os dados de forma tipada e ajudam a evitar manipulação solta de valores pela aplicação.
 - `app.repository`: cada repositório organiza operações de leitura e escrita para um tipo de dado específico e faz a ponte entre a aplicação e as classes SQL reutilizadas.
 - `app.service`: reúne regras mais voltadas ao comportamento da aplicação, especialmente na composição e execução das consultas avançadas.
@@ -127,7 +131,9 @@ O código está organizado em camadas e módulos com responsabilidades bem defin
 - `database/views`: contém views de leitura reutilizáveis pela aplicação e pelo dashboard.
 - `database/functions`: contém functions PostgreSQL que retornam um valor e podem ser usadas em `SELECT`.
 - `database/procedure`: contém procedures PostgreSQL para operações que alteram dados e são executadas com `CALL`.
-- `dashboard`: concentra a camada analítica web construída com Streamlit. Essa parte consome o mesmo banco PostgreSQL da aplicação desktop, aplica filtros dinâmicos, executa consultas agregadas e apresenta KPIs e gráficos para apoio gerencial.
+- `frontend`: contém a interface web atual, incluindo login, menu principal, cadastros, consultas e dashboard.
+- `InterfaceSwing`: implementação desktop legada, mantida apenas para referência.
+- `dashboard`: implementação Streamlit legada, não usada pelo deploy atual.
 
 ## Modelo de dados da aplicação
 
@@ -140,20 +146,18 @@ As entidades centrais do sistema são:
 
 ## Requisitos
 
-- JDK compatível com o projeto
-- PostgreSQL em execução
+- JDK 21 ou superior
+- Maven 3.9 ou superior
+- Docker, para reproduzir o deploy localmente
+- um projeto PostgreSQL/Supabase
 - variáveis de ambiente configuradas para acesso ao banco
-- Maven opcional para build
-- Python instalado para execução do dashboard web
-- dependências do dashboard instaladas via `dashboard/requirements.txt`
 
-O `pom.xml` está configurado com:
+O `pom.xml` está configurado com Java 21:
 
 ```xml
-<maven.compiler.release>25</maven.compiler.release>
+<maven.compiler.release>21</maven.compiler.release>
 ```
 
-Se você for ajustar a versão do Java usada no ambiente, atualize esse valor para manter consistência com o compilador instalado.
 
 ## Configuração do banco
 
@@ -167,65 +171,48 @@ $env:DB_PASSWORD="sua_senha"
 
 A conexão JDBC é centralizada em [src/app/db/Database.java](src/app/db/Database.java).
 
-Para usar o Supabase, copie a connection string PostgreSQL do painel `Connect` e configure:
+Para usar o Supabase, copie a connection string do painel `Connect`. O backend aceita uma URL única:
 
 ```powershell
 $env:SUPABASE_DB_URL="postgresql://postgres.seu_projeto:SUA_SENHA@aws-0-regiao.pooler.supabase.com:6543/postgres?sslmode=require"
-$env:DB_URL="jdbc:postgresql://aws-0-regiao.pooler.supabase.com:6543/postgres?sslmode=require"
-$env:DB_USER="postgres.seu_projeto"
-$env:DB_PASSWORD="SUA_SENHA"
 ```
 
-O dashboard prioriza `SUPABASE_DB_URL`, depois `DATABASE_URL` e, por compatibilidade, `DB_URL`. A aplicação Java continua usando `DB_URL`, `DB_USER` e `DB_PASSWORD`.
+Também é possível usar separadamente `DB_URL`, `DB_USER` e `DB_PASSWORD`. Configure as variáveis na mesma sessão do terminal que iniciará o Java.
 
 ## Como compilar e executar
 
-### Opção 1: compilação manual
+### Compilação com Maven
 
 ```powershell
-$files = Get-ChildItem ".\src" -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
-javac -d .\out $files
-java -cp .\out MenuPrincipal
+mvn package -DskipTests dependency:copy-dependencies -DoutputDirectory=target/dependency
 ```
 
-### Opção 2: Maven
-
-```powershell
-mvn compile
-```
-
-### Classe principal
-
-O ponto de entrada do projeto é:
-
-```text
-src/MenuPrincipal.java
-```
-
-Essa classe delega a inicialização para a interface principal em `InterfaceSwing.MenuPrincipal`.
+### Executar o site
 
 ## Aplicação web
 
 <img width="1446" height="847" alt="Captura de tela 2026-05-25 181807" src="https://github.com/user-attachments/assets/9c010c0a-1c03-426a-ae4e-9c3f597b2557" />
 
-O site é servido por um backend Java em `app.web.WebServer` e reúne a navegação operacional e analítica em uma única aplicação web. O Streamlit anterior permanece apenas como referência analítica, não sendo usado pelo deploy.
+O site é servido por um backend Java em `app.web.WebServer` e reúne a navegação operacional e analítica em uma única aplicação web.
 
 ### Arquivos da aplicação web
 
 - `src/app/web/WebServer.java`: servidor HTTP Java e API JDBC
+- `src/app/web/WebCrudService.java`: CRUD usando models, repositories, validações e DML
+- `src/app/web/WebQueryService.java`: consultas usando `ConsultaService` e DQL
 - `frontend/index.html`: frontend web
 - `frontend/app.js`: navegação, CRUD, consultas e dashboard
 - `frontend/styles.css`: identidade visual responsiva
 
-### Funcionalidades do dashboard
+### Funcionalidades do site
 
 - login simples por nome
 - CRUD de jogos, jogadores, plataformas e avaliações
 - consultas simples, filtros, joins e agregações
 - KPIs com quantidade de jogos, jogadores cadastrados, média geral das notas e plataforma mais usada
-- filtros dinâmicos por gênero, status da avaliação e faixa de ano de lançamento
-- gráficos com agregações, agrupamentos, ordenações e filtros SQL
-- ranking de jogos por volume de avaliações
+- ranking de jogos por volume de avaliações usando a view `vw_resumo_jogos`
+- média geral usando a function `fn_media_jogo`
+- atualização de status usando a procedure `pr_atualizar_status_avaliacao`
 
 ### Como executar localmente
 
@@ -245,7 +232,8 @@ java -cp ".\target\classes;.\target\dependency\*" app.web.WebServer
 
 - o site usa o banco PostgreSQL do Supabase
 - ele usa `SUPABASE_DB_URL` no Render, ou `DB_URL`, `DB_USER` e `DB_PASSWORD` para compatibilidade local
-- as dependências Python do dashboard não ficam no `pom.xml`, porque pertencem a outro ecossistema
+- a porta do servidor é lida da variável `PORT`, fornecida pelo Render
+- o frontend é servido pelo próprio backend Java
 
 ## Supabase e deploy no Render
 
@@ -257,7 +245,7 @@ O arquivo `render.yaml` configura o deploy do site Java como um Web Service. Par
 4. No painel do serviço, informe `SUPABASE_DB_URL` usando a connection string do Supabase com `sslmode=require`.
 5. Execute os scripts no SQL Editor do Supabase, seguindo a ordem indicada na seção [Views, functions e procedures](#views-functions-e-procedures).
 
-O Render fornece automaticamente a variável `PORT`; o comando de inicialização já usa essa porta e o endpoint `/_stcore/health` é usado no health check.
+O Render fornece automaticamente a variável `PORT`; o comando de inicialização do Docker já usa essa porta. O health check usa `/`.
 
 ## Fluxo da aplicação
 
@@ -279,18 +267,20 @@ https://github.com/user-attachments/assets/13cd62b6-8579-459e-b6a7-da05a22b7fa9
 
 <img width="1453" height="850" alt="Captura de tela 2026-05-25 182552" src="https://github.com/user-attachments/assets/55b61120-ad08-4047-93dd-fa71e8a2ceee" />
 
-5. A opção "Análises" permite executar consultas simples e avançadas.
+5. A opção `Consultas` permite executar consultas simples e avançadas.
 
 <img width="1450" height="844" alt="Captura de tela 2026-05-25 182653" src="https://github.com/user-attachments/assets/a95b145c-d146-4630-82e9-ef391fa324e5" />
 
 ## Consultas disponíveis
 
-Na tela `TelaVerTabelas`, o usuário pode alternar entre quatro modos:
+Na página `Consultas`, o usuário pode alternar entre quatro modos:
 
 - `Simples`: listagem geral e busca por ID
 - `Filtros`: filtros por campos específicos
 - `Joins`: cruzamento de dados entre tabelas relacionadas
 - `Agregacoes`: totais, médias e outras métricas
+
+As consultas são encaminhadas por `WebQueryService` para `ConsultaService`, que utiliza as classes DQL de `database/dql`.
 
 <img width="1449" height="846" alt="Captura de tela 2026-05-25 182746" src="https://github.com/user-attachments/assets/17bd5cdb-48e2-42b9-aea7-fb6b9a7383f3" />
 
@@ -306,6 +296,7 @@ Os scripts ficam separados por responsabilidade e devem ser executados nesta ord
 Com o PostgreSQL configurado, eles podem ser aplicados pelo `psql` na ordem acima. Ajuste o banco e o host conforme o seu ambiente:
 
 ```powershell
+psql -h localhost -U $env:DB_USER -d seu_banco -f .\database\ddl\01_schema.sql
 psql -h localhost -U $env:DB_USER -d seu_banco -f .\database\views\01_view_resumo_jogos.sql
 psql -h localhost -U $env:DB_USER -d seu_banco -f .\database\functions\01_function_media_jogo.sql
 psql -h localhost -U $env:DB_USER -d seu_banco -f .\database\procedure\01_procedure_atualizar_status_avaliacao.sql
@@ -319,7 +310,7 @@ SELECT fn_media_jogo(1);
 CALL pr_atualizar_status_avaliacao(1, 'Aprovada');
 ```
 
-As views e functions podem ser consumidas com `Statement` ou `PreparedStatement` pela aplicação Java. A procedure deve ser chamada com `CallableStatement` ou com `CALL` em um `Statement`.
+O dashboard usa a view e a function diretamente no backend Java. A procedure é chamada pelo `WebCrudService` quando o status de uma avaliação é atualizado.
 
 ## Validações implementadas
 
