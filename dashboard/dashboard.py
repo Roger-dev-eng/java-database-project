@@ -879,20 +879,46 @@ def renderizar_login() -> bool:
     return False
 
 
+def renderizar_menu_principal() -> None:
+    st.title("Menu principal")
+    st.caption(f"Bem-vindo, {st.session_state['usuario']}.")
+    st.write("Escolha uma opção para continuar:")
+
+    opcoes = [
+        ("Jogos", "Gerencie o catálogo de jogos."),
+        ("Jogadores", "Cadastre jogadores e seus jogos."),
+        ("Plataformas", "Controle plataformas e horas jogadas."),
+        ("Avaliações", "Registre notas, comentários e status."),
+        ("Consultas", "Execute consultas, joins e agregações."),
+        ("Dashboard", "Abra os indicadores e gráficos analíticos."),
+    ]
+    colunas = st.columns(2)
+    for indice, (nome, descricao) in enumerate(opcoes):
+        with colunas[indice % 2]:
+            st.subheader(nome)
+            st.caption(descricao)
+            if st.button(f"Abrir {nome}", key=f"menu_{nome}", use_container_width=True):
+                st.session_state["pagina"] = nome
+                st.rerun()
+
+
 def main() -> None:
     try:
         if not renderizar_login():
             return
+        if "pagina" not in st.session_state:
+            st.session_state["pagina"] = "Menu principal"
         st.sidebar.title("Sistema de Jogos")
         st.sidebar.caption(f"Usuário: {st.session_state['usuario']}")
-        pagina = st.sidebar.radio(
-            "Navegação",
-            ["Dashboard", "Jogos", "Jogadores", "Plataformas", "Avaliações", "Consultas"],
-        )
+        paginas_disponiveis = ["Menu principal", "Jogos", "Jogadores", "Plataformas", "Avaliações", "Consultas", "Dashboard"]
+        pagina = st.sidebar.radio("Navegação", paginas_disponiveis, index=paginas_disponiveis.index(st.session_state["pagina"]))
+        st.session_state["pagina"] = pagina
         if st.sidebar.button("Sair"):
             st.session_state.pop("usuario", None)
+            st.session_state.pop("pagina", None)
             st.rerun()
         paginas = {
+            "Menu principal": renderizar_menu_principal,
             "Dashboard": renderizar_dashboard,
             "Jogos": renderizar_jogos,
             "Jogadores": renderizar_jogadores,

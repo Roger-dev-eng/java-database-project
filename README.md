@@ -208,13 +208,14 @@ Essa classe delega a inicialização para a interface principal em `InterfaceSwi
 
 <img width="1446" height="847" alt="Captura de tela 2026-05-25 181807" src="https://github.com/user-attachments/assets/9c010c0a-1c03-426a-ae4e-9c3f597b2557" />
 
-O site Streamlit substitui a navegação Swing e reúne as funções operacionais e analíticas em uma única aplicação web.
+O site é servido por um backend Java em `app.web.WebServer` e reúne a navegação operacional e analítica em uma única aplicação web. O Streamlit anterior permanece apenas como referência analítica, não sendo usado pelo deploy.
 
-### Arquivos do dashboard
+### Arquivos da aplicação web
 
-- `dashboard/dashboard.py`: arquivo principal da aplicação Streamlit
-- `dashboard/app.py`: ponto de compatibilidade para abertura pelo launcher Java
-- `dashboard/requirements.txt`: dependências Python do dashboard
+- `src/app/web/WebServer.java`: servidor HTTP Java e API JDBC
+- `frontend/index.html`: frontend web
+- `frontend/app.js`: navegação, CRUD, consultas e dashboard
+- `frontend/styles.css`: identidade visual responsiva
 
 ### Funcionalidades do dashboard
 
@@ -228,16 +229,16 @@ O site Streamlit substitui a navegação Swing e reúne as funções operacionai
 
 ### Como executar localmente
 
-Instale as dependências do dashboard:
+Compile o backend Java:
 
 ```powershell
-pip install -r .\dashboard\requirements.txt
+mvn clean package -DskipTests dependency:copy-dependencies -DoutputDirectory=target/dependency
 ```
 
-Depois execute:
+Depois execute o site:
 
 ```powershell
-streamlit run .\dashboard\dashboard.py
+java -cp ".\target\classes;.\target\dependency\*" app.web.WebServer
 ```
 
 ### Observações importantes
@@ -248,7 +249,7 @@ streamlit run .\dashboard\dashboard.py
 
 ## Supabase e deploy no Render
 
-O arquivo `render.yaml` configura o deploy do dashboard como um Web Service Python. Para publicar:
+O arquivo `render.yaml` configura o deploy do site Java como um Web Service. Para publicar:
 
 1. Faça o push do projeto para um repositório GitHub.
 2. No Render, escolha `New > Blueprint` e selecione o repositório.

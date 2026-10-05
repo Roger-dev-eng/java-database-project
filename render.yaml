@@ -1,11 +1,15 @@
 services:
   - type: web
     name: jogos-dashboard
-    runtime: python
+    runtime: java
     plan: free
-    buildCommand: pip install -r dashboard/requirements.txt
-    startCommand: streamlit run dashboard/dashboard.py --server.address 0.0.0.0 --server.port $PORT
-    healthCheckPath: /_stcore/health
+    buildCommand: mvn clean package -DskipTests dependency:copy-dependencies -DoutputDirectory=target/dependency
+    startCommand: java -cp target/classes:target/dependency/* app.web.WebServer
+    healthCheckPath: /
     envVars:
-      - key: SUPABASE_DB_URL
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
         sync: false
