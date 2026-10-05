@@ -49,7 +49,8 @@ public final class Database {
         }
 
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(url.trim());
+        String jdbcUrl = url.trim().replaceFirst("^postgres(?:ql)?://", "jdbc:postgresql://");
+        config.setJdbcUrl(jdbcUrl);
         config.setUsername(usuario.trim());
         config.setPassword(senha);
         config.setMaximumPoolSize(5);
