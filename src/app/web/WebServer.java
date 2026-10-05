@@ -118,11 +118,30 @@ public final class WebServer {
     private static int bind(PreparedStatement statement, String[] columns, JsonObject data) throws SQLException {
         int position = 1;
         for (String column : columns) {
-            if (!data.has(column) || data.get(column).isJsonNull()) statement.setNull(position++, Types.NULL);
-            else if (data.get(column).getAsString().isBlank()) statement.setNull(position++, Types.NULL);
-            else statement.setObject(position++, data.get(column).getAsString());
+            if (!data.has(column) || data.get(column).isJsonNull() || data.get(column).getAsString().isBlank()) {
+                statement.setNull(position++, sqlType(column));
+                continue;
+            }
+            String value = data.get(column).getAsString();
+            if (isIntegerColumn(column)) statement.setInt(position++, Integer.parseInt(value));
+            else if ("data_avaliacao".equals(column)) statement.setDate(position++, java.sql.Date.valueOf(value));
+            else statement.setString(position++, value);
         }
         return position;
+    }
+
+    private static boolean isIntegerColumn(String column) {
+        return "ano_lancamento".equals(column)
+                || "horas_jogadas".equals(column)
+                || "nota".equals(column)
+                || "fk_jogo".equals(column)
+                || "fk_jogador".equals(column);
+    }
+
+    private static int sqlType(String column) {
+        if (isIntegerColumn(column)) return Types.INTEGER;
+        if ("data_avaliacao".equals(column)) return Types.DATE;
+        return Types.VARCHAR;
     }
 
     private static List<Map<String, Object>> query(Connection connection, String sql) throws SQLException {
