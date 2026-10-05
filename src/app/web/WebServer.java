@@ -81,11 +81,10 @@ public final class WebServer {
             return;
         }
         Integer id = parts.length > 1 ? Integer.valueOf(parts[1]) : null;
-        JsonObject payload = readJson(exchange);
         try (Connection connection = Database.conectar()) {
             if ("GET".equals(exchange.getRequestMethod())) sendJson(exchange, 200, query(connection, definition.select));
-            else if ("POST".equals(exchange.getRequestMethod())) { insert(connection, definition, payload); sendJson(exchange, 201, Map.of("ok", true)); }
-            else if ("PUT".equals(exchange.getRequestMethod()) && id != null) { update(connection, definition, id, payload); sendJson(exchange, 200, Map.of("ok", true)); }
+            else if ("POST".equals(exchange.getRequestMethod())) { insert(connection, definition, readJson(exchange)); sendJson(exchange, 201, Map.of("ok", true)); }
+            else if ("PUT".equals(exchange.getRequestMethod()) && id != null) { update(connection, definition, id, readJson(exchange)); sendJson(exchange, 200, Map.of("ok", true)); }
             else if ("DELETE".equals(exchange.getRequestMethod()) && id != null) { delete(connection, definition, id); sendJson(exchange, 200, Map.of("ok", true)); }
             else sendJson(exchange, 405, Map.of("error", "Método não permitido."));
         }

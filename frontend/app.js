@@ -9,10 +9,15 @@ const element = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
 
 async function api(path, options) {
-  const response = await fetch(`/api/${path}`, options || {});
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "Falha na operação.");
-  return data;
+  document.body.classList.add("is-loading");
+  try {
+    const response = await fetch(`/api/${path}`, options || {});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Falha na operação.");
+    return data;
+  } finally {
+    document.body.classList.remove("is-loading");
+  }
 }
 
 function showToast(message, isError) {
