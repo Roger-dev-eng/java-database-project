@@ -15,8 +15,10 @@ O projeto combina interface gráfica, operações CRUD, consultas SQL e visualiz
 - [Configuração do banco](#configuração-do-banco)
 - [Como compilar e executar](#como-compilar-e-executar)
 - [Dashboard web](#dashboard-web)
+- [Supabase e deploy no Render](#supabase-e-deploy-no-render)
 - [Fluxo da aplicação](#fluxo-da-aplicação)
 - [Consultas disponíveis](#consultas-disponíveis)
+- [Views, functions e procedures](#views-functions-e-procedures)
 - [Validações implementadas](#validações-implementadas)
 - [Vídeo Explicativo e Demonstrativo](#vídeo-explicativo-e-demonstrativo)
 
@@ -100,6 +102,17 @@ dashboard/
   app.py
   dashboard.py
   requirements.txt
+database/
+  ddl/
+    01_schema.sql
+  dml/
+  dql/
+  views/
+    01_view_resumo_jogos.sql
+  functions/
+    01_function_media_jogo.sql
+  procedure/
+    01_procedure_atualizar_status_avaliacao.sql
 ```
 
 ## Arquitetura
@@ -115,6 +128,9 @@ O código está organizado em camadas e módulos com responsabilidades bem defin
 - `ddl`: concentra a definição estrutural do banco, isto é, os elementos responsáveis pela criação das tabelas.
 - `dml`: reúne as instruções de manipulação de dados, como inserções, atualizações e exclusões.
 - `dql`: reúne as consultas SQL usadas para leitura de dados.
+- `database/views`: contém views de leitura reutilizáveis pela aplicação e pelo dashboard.
+- `database/functions`: contém functions PostgreSQL que retornam um valor e podem ser usadas em `SELECT`.
+- `database/procedure`: contém procedures PostgreSQL para operações que alteram dados e são executadas com `CALL`.
 - `dashboard`: concentra a camada analítica web construída com Streamlit. Essa parte consome o mesmo banco PostgreSQL da aplicação desktop, aplica filtros dinâmicos, executa consultas agregadas e apresenta KPIs e gráficos para apoio gerencial.
 
 ## Modelo de dados da aplicação
@@ -154,6 +170,17 @@ $env:DB_PASSWORD="sua_senha"
 ```
 
 A conexão JDBC é centralizada em [src/app/db/Database.java](src/app/db/Database.java).
+
+Para usar o Supabase, copie a connection string PostgreSQL do painel `Connect` e configure:
+
+```powershell
+$env:SUPABASE_DB_URL="postgresql://postgres.seu_projeto:SUA_SENHA@aws-0-regiao.pooler.supabase.com:6543/postgres?sslmode=require"
+$env:DB_URL="jdbc:postgresql://aws-0-regiao.pooler.supabase.com:6543/postgres?sslmode=require"
+$env:DB_USER="postgres.seu_projeto"
+$env:DB_PASSWORD="SUA_SENHA"
+```
+
+O dashboard prioriza `SUPABASE_DB_URL`, depois `DATABASE_URL` e, por compatibilidade, `DB_URL`. A aplicação Java continua usando `DB_URL`, `DB_USER` e `DB_PASSWORD`.
 
 ## Como compilar e executar
 
@@ -224,6 +251,18 @@ O dashboard também pode ser aberto a partir do botão `Dashboard` no menu princ
 - ele depende das variáveis `DB_URL`, `DB_USER` e `DB_PASSWORD`
 - as dependências Python do dashboard não ficam no `pom.xml`, porque pertencem a outro ecossistema
 
+## Supabase e deploy no Render
+
+O arquivo `render.yaml` configura o deploy do dashboard como um Web Service Python. Para publicar:
+
+1. Faça o push do projeto para um repositório GitHub.
+2. No Render, escolha `New > Blueprint` e selecione o repositório.
+3. Confirme o serviço `jogos-dashboard` criado pelo `render.yaml`.
+4. No painel do serviço, informe `SUPABASE_DB_URL` usando a connection string do Supabase com `sslmode=require`.
+5. Execute os scripts no SQL Editor do Supabase, seguindo a ordem indicada na seção [Views, functions e procedures](#views-functions-e-procedures).
+
+O Render fornece automaticamente a variável `PORT`; o comando de inicialização já usa essa porta e o endpoint `/_stcore/health` é usado no health check.
+
 ## Fluxo da aplicação
 
 1. O usuário acessa a tela de login.
@@ -258,6 +297,33 @@ Na tela `TelaVerTabelas`, o usuário pode alternar entre quatro modos:
 - `Agregacoes`: totais, médias e outras métricas
 
 <img width="1449" height="846" alt="Captura de tela 2026-05-25 182746" src="https://github.com/user-attachments/assets/17bd5cdb-48e2-42b9-aea7-fb6b9a7383f3" />
+
+## Views, functions e procedures
+
+Os scripts ficam separados por responsabilidade e devem ser executados nesta ordem:
+
+1. `database/ddl/01_schema.sql`
+2. `database/views/01_view_resumo_jogos.sql`
+3. `database/functions/01_function_media_jogo.sql`
+4. `database/procedure/01_procedure_atualizar_status_avaliacao.sql`
+
+Com o PostgreSQL configurado, eles podem ser aplicados pelo `psql` na ordem acima. Ajuste o banco e o host conforme o seu ambiente:
+
+```powershell
+psql -h localhost -U $env:DB_USER -d seu_banco -f .\database\views\01_view_resumo_jogos.sql
+psql -h localhost -U $env:DB_USER -d seu_banco -f .\database\functions\01_function_media_jogo.sql
+psql -h localhost -U $env:DB_USER -d seu_banco -f .\database\procedure\01_procedure_atualizar_status_avaliacao.sql
+```
+
+Exemplos de uso após a instalação:
+
+```sql
+SELECT * FROM vw_resumo_jogos ORDER BY media_nota DESC;
+SELECT fn_media_jogo(1);
+CALL pr_atualizar_status_avaliacao(1, 'Aprovada');
+```
+
+As views e functions podem ser consumidas com `Statement` ou `PreparedStatement` pela aplicação Java. A procedure deve ser chamada com `CallableStatement` ou com `CALL` em um `Statement`.
 
 ## Validações implementadas
 

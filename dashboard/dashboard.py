@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import Dict, Iterable, Tuple
+from urllib.parse import parse_qs, unquote, urlparse
 
 import pandas as pd
 import plotly.express as px
@@ -26,20 +27,34 @@ def obter_configuracao() -> Dict[str, str]:
         "password": os.getenv("DB_PASSWORD", ""),
     }
 
-    db_url = os.getenv("DB_URL", "").strip()
-    if db_url.startswith("jdbc:postgresql://"):
-        sem_prefixo = db_url.replace("jdbc:postgresql://", "", 1)
-        host_porta, _, banco = sem_prefixo.partition("/")
-        host, _, porta = host_porta.partition(":")
-        config["host"] = host or config["host"]
-        config["port"] = porta or config["port"]
-        config["dbname"] = banco or config["dbname"]
+    db_url = next(
+        (
+            os.getenv(nome, "").strip()
+            for nome in ("SUPABASE_DB_URL", "DATABASE_URL", "DB_URL")
+            if os.getenv(nome, "").strip()
+        ),
+        "",
+    )
+    if db_url:
+        url = db_url.replace("jdbc:postgresql://", "postgresql://", 1)
+        parsed = urlparse(url)
+        if parsed.scheme not in ("postgresql", "postgres") or not parsed.hostname:
+            raise RuntimeError("SUPABASE_DB_URL deve ser uma URL PostgreSQL valida.")
+
+        config["host"] = parsed.hostname
+        config["port"] = str(parsed.port or config["port"])
+        config["dbname"] = parsed.path.lstrip("/") or config["dbname"]
+        config["user"] = unquote(parsed.username or config["user"])
+        config["password"] = unquote(parsed.password or config["password"])
+
+        parametros = parse_qs(parsed.query)
+        config["sslmode"] = parametros.get("sslmode", ["require"])[0]
 
     return config
 
 
 def validar_configuracao(config: Dict[str, str]) -> None:
-    faltando = [chave for chave in ("dbname", "user", "password") if not config.get(chave)]
+    faltando = [chave for chave in ("host", "dbname", "user", "password") if not config.get(chave)]
     if faltando:
         raise RuntimeError(
             "Defina as variaveis de ambiente do banco antes de abrir o dashboard. "
@@ -480,7 +495,7 @@ def main() -> None:
         st.exception(exc)
         st.info(
             "Confirme se o PostgreSQL esta ativo e se as variaveis de ambiente "
-            "DB_URL, DB_USER e DB_PASSWORD estao configuradas."
+            "SUPABASE_DB_URL ou DB_URL estao configuradas."
         )
 
 

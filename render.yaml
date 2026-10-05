@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: jogos-dashboard
+    runtime: python
+    plan: free
+    buildCommand: pip install -r dashboard/requirements.txt
+    startCommand: streamlit run dashboard/dashboard.py --server.address 0.0.0.0 --server.port $PORT
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: SUPABASE_DB_URL
+        sync: false
