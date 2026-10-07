@@ -297,4 +297,4 @@ O projeto possui validações reutilizáveis para:
 Essas regras estão centralizadas em `app.validation.Validator`.
 
 ## Vídeo Explicativo e Demonstrativo
-https://drive.google.com/file/d/1SSahKolN3dFNy1kENJBgL0YhF2CDtx4J/view?usp=sharing
+https://drive.google.com/file/d/1zP7U1b6AGS0YlKtMr7ON4dltovEF0fXE/view?usp=sharing
