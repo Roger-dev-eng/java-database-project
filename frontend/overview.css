@@ -2,12 +2,13 @@
 .login{grid-template-columns:1fr;place-items:center;padding:32px}.login-card{width:min(430px,100%);padding:46px;background:var(--navy);color:#fff;border:1px solid #49646a;box-shadow:12px 12px 0 var(--lime)}.login-card h1{margin:20px 0}.login-card p{margin-bottom:30px;color:#b9c5c0}.login-card form{margin-top:0}.login-card label{color:#b9c5c0}.login-card input{background:transparent;border:0;border-bottom:1px solid #6b8080;color:#fff;padding:13px 0;margin:8px 0 18px}.login aside{display:none}.app nav .user{margin-top:8px}
 
 .login{padding:clamp(24px,6vw,72px);background:#cbdad2;color:var(--ink)}
-.login-card{width:min(620px,100%);padding:clamp(32px,6vw,60px);box-shadow:10px 10px 0 var(--lime)}
+.login>div.login-card{width:min(700px,100%);padding:clamp(32px,6vw,60px);box-shadow:10px 10px 0 var(--lime)}
 .login-card h1{font-size:clamp(52px,7vw,72px);line-height:1.14;letter-spacing:-2px;margin:24px 0}
+.login-card h1 span{display:block;white-space:nowrap}
 .login-card h1 em{display:block}
 .login-card p{max-width:390px;font-size:16px;line-height:1.75;margin:0 0 38px}
 .login-card form{max-width:100%}
 .login-card label{display:block;font-size:14px;line-height:1.5}
 .login-card input{font-size:16px;padding:14px 0;margin:10px 0 24px}
 .login-card button{min-height:54px;font-size:16px}
-@media(max-width:650px){.login{padding:20px}.login-card{padding:34px 28px}.login-card h1{font-size:52px}}
+@media(max-width:650px){.login{padding:20px}.login>div.login-card{padding:34px 28px}.login-card h1{font-size:clamp(38px,10vw,52px)}}
