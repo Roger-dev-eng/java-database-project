@@ -173,15 +173,19 @@ async function renderQueries() {
   const choice = element("#query-choice");
   const parameterLabel = element("#query-parameter-label");
 
+  function updateParameterVisibility() {
+    const needsParameter = mode.value === "Filtros" || mode.value === "Simples" && ["Buscar por ID", "Buscar por nome"].includes(choice.value) || choice.value === "Avaliacoes recentes";
+    parameterLabel.style.display = needsParameter ? "flex" : "none";
+    element("#query-parameter").placeholder = choice.value === "Avaliacoes recentes" ? "Quantidade" : "Valor da consulta";
+  }
+
   function updateChoices() {
     choice.innerHTML = options[table.value][mode.value].map((item) => `<option>${item}</option>`).join("");
-    const needsParameter = mode.value === "Filtros" || mode.value === "Simples" && ["Buscar por ID", "Buscar por nome"].includes(choice.value) || choice.value === "Avaliações recentes";
-    parameterLabel.style.display = needsParameter ? "flex" : "none";
-    element("#query-parameter").placeholder = choice.value === "Avaliações recentes" ? "Quantidade" : "Valor da consulta";
+    updateParameterVisibility();
   }
   table.onchange = updateChoices;
   mode.onchange = updateChoices;
-  choice.onchange = updateChoices;
+  choice.onchange = updateParameterVisibility;
   updateChoices();
   element("#run-query").onclick = async () => {
     try {
