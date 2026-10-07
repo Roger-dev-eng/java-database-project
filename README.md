@@ -35,8 +35,6 @@ O sistema oferece:
 - tela de consultas com listagens, filtros, joins e agregações
 - dashboard web com KPIs, filtros dinâmicos e gráficos analíticos
 
-<img width="1447" height="848" alt="Captura de tela 2026-05-25 181749" src="https://github.com/user-attachments/assets/91afb1b0-b370-4af8-a3e6-8c71ab9bcc42" />
-
 ## Stack
 - Java 21
 - Maven
@@ -53,18 +51,7 @@ diagrama/
   Diagrama Entidade-Relacionamento.pdf
 src/
   MenuPrincipal.java
-  InterfaceSwing/
-    MenuPrincipal.java
-    telas/
-      Conexao.java
-      EstiloUI.java
-      TelaLogin.java
-      TelaBoasVindas.java
-      TelaJogos.java
-      TelaJogadores.java
-      TelaPlataformas.java
-      TelaAvaliacoes.java
-      TelaVerTabelas.java
+  
   app/
     db/
       Database.java
@@ -132,8 +119,6 @@ O código está organizado em camadas e módulos com responsabilidades bem defin
 - `database/functions`: contém functions PostgreSQL que retornam um valor e podem ser usadas em `SELECT`.
 - `database/procedure`: contém procedures PostgreSQL para operações que alteram dados e são executadas com `CALL`.
 - `frontend`: contém a interface web atual, incluindo login, menu principal, cadastros, consultas e dashboard.
-- `InterfaceSwing`: implementação desktop legada, mantida apenas para referência.
-- `dashboard`: implementação Streamlit legada, não usada pelo deploy atual.
 
 ## Modelo de dados da aplicação
 
@@ -191,7 +176,6 @@ mvn package -DskipTests dependency:copy-dependencies -DoutputDirectory=target/de
 
 ## Aplicação web
 
-<img width="1446" height="847" alt="Captura de tela 2026-05-25 181807" src="https://github.com/user-attachments/assets/9c010c0a-1c03-426a-ae4e-9c3f597b2557" />
 
 O site é servido por um backend Java em `app.web.WebServer` e reúne a navegação operacional e analítica em uma única aplicação web.
 
@@ -251,25 +235,14 @@ O Render fornece automaticamente a variável `PORT`; o comando de inicializaçã
 
 1. O usuário acessa a tela de login.
 
-<img width="1450" height="848" alt="Captura de tela 2026-05-25 181721" src="https://github.com/user-attachments/assets/3694d5a0-ecc9-466e-9efa-65ff1cf030f2" />
-
 2. O menu principal libera acesso aos módulos.
-
-<img width="1447" height="848" alt="Captura de tela 2026-05-25 181749" src="https://github.com/user-attachments/assets/03d9ef53-e376-4bab-b7ec-fc1e51a483a4" />
 
 3. O botão `Dashboard` também permite abrir a visualização web analítica do sistema.
 
-<img width="1446" height="847" alt="Captura de tela 2026-05-25 181807" src="https://github.com/user-attachments/assets/8f09195b-fd6e-4491-a6ae-9a8364de0a44" />
-
-https://github.com/user-attachments/assets/13cd62b6-8579-459e-b6a7-da05a22b7fa9
-
 4. Cada tela operacional realiza consultas e operações CRUD no banco.
-
-<img width="1453" height="850" alt="Captura de tela 2026-05-25 182552" src="https://github.com/user-attachments/assets/55b61120-ad08-4047-93dd-fa71e8a2ceee" />
 
 5. A opção `Consultas` permite executar consultas simples e avançadas.
 
-<img width="1450" height="844" alt="Captura de tela 2026-05-25 182653" src="https://github.com/user-attachments/assets/a95b145c-d146-4630-82e9-ef391fa324e5" />
 
 ## Consultas disponíveis
 
@@ -281,8 +254,6 @@ Na página `Consultas`, o usuário pode alternar entre quatro modos:
 - `Agregacoes`: totais, médias e outras métricas
 
 As consultas são encaminhadas por `WebQueryService` para `ConsultaService`, que utiliza as classes DQL de `database/dql`.
-
-<img width="1449" height="846" alt="Captura de tela 2026-05-25 182746" src="https://github.com/user-attachments/assets/17bd5cdb-48e2-42b9-aea7-fb6b9a7383f3" />
 
 ## Views, functions e procedures
 

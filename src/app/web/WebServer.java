@@ -174,7 +174,7 @@ public final class WebServer {
         return rows;
     }
 
-    private static Map<String, Object> dashboard() throws SQLException {
+    private static Map<String, Object> dashboard() throws Exception {
         try (Connection connection = Database.conectar()) {
             Map<String, Object> data = new LinkedHashMap<>();
             data.put("jogos", query(connection, "SELECT COUNT(*) AS total FROM jogos"));
@@ -182,6 +182,11 @@ public final class WebServer {
             data.put("media", query(connection, "SELECT COALESCE(ROUND(AVG(fn_media_jogo(id_jogo)), 2), 0) AS total FROM jogos"));
             data.put("generos", query(connection, "SELECT COALESCE(genero, 'Sem gênero') AS nome, COUNT(*) AS total FROM jogos GROUP BY genero ORDER BY total DESC"));
             data.put("ranking", query(connection, "SELECT nome, quantidade_avaliacoes AS total FROM vw_resumo_jogos ORDER BY quantidade_avaliacoes DESC, nome LIMIT 10"));
+            WebQueryService queries = new WebQueryService();
+            data.put("mediaJogos", queries.executar("Avaliacoes", "Agregações", "Media notas por jogo", ""));
+            data.put("notas", queries.executar("Avaliacoes", "Agregações", "Distribuicao de notas", ""));
+            data.put("horasJogadores", queries.executar("Plataformas", "Agregações", "Total de horas por jogador", ""));
+            data.put("status", query(connection, "SELECT COALESCE(status, 'Sem status') AS nome, COUNT(*) AS total FROM avaliacoes GROUP BY status ORDER BY total DESC"));
             return data;
         }
     }

@@ -75,10 +75,27 @@ async function renderResource(resource) {
   const schema = schemas[resource];
   try {
     const rows = await api(resource);
-    element("#content").innerHTML = `<header class="row"><div><span class="eyebrow">MÓDULO OPERACIONAL</span><h1>${schema.title}</h1><p>${rows.length} registro(s) armazenado(s).</p></div><button id="new">+ Novo ${schema.title.slice(0, -1)}</button></header><div class="table"><table><thead><tr>${schema.columns.map((column) => `<th>${labels[column] || column}</th>`).join("")}<th>AÇÕES</th></tr></thead><tbody>${rows.map((row) => `<tr>${schema.columns.map((column) => `<td>${escapeHtml(row[column])}</td>`).join("")}<td><button class="edit" data-id="${row[schema.id]}">Editar</button><button class="del" data-id="${row[schema.id]}">Excluir</button></td></tr>`).join("") || "<tr><td>Nenhum registro.</td></tr>"}</tbody></table></div>`;
+    const pageSize = 20;
+    let currentPage = 1;
+    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+
+    function renderTablePage() {
+      const start = (currentPage - 1) * pageSize;
+      const visibleRows = rows.slice(start, start + pageSize);
+      const tableRows = visibleRows.map((row) => `<tr>${schema.columns.map((column) => `<td>${escapeHtml(row[column])}</td>`).join("")}<td><button class="edit" data-id="${row[schema.id]}">Editar</button><button class="del" data-id="${row[schema.id]}">Excluir</button></td></tr>`).join("") || `<tr><td colspan="${schema.columns.length + 1}">Nenhum registro.</td></tr>`;
+      element("#records-table-body").innerHTML = tableRows;
+      element("#page-info").textContent = `Página ${currentPage} de ${totalPages} · ${rows.length} registro(s)`;
+      element("#previous-page").disabled = currentPage === 1;
+      element("#next-page").disabled = currentPage === totalPages;
+      document.querySelectorAll(".edit").forEach((button) => { button.onclick = () => renderForm(resource, rows.find((row) => String(row[schema.id]) === button.dataset.id)); });
+      document.querySelectorAll(".del").forEach((button) => { button.onclick = () => deleteResource(resource, button.dataset.id); });
+    }
+
+    element("#content").innerHTML = `<header class="row"><div><span class="eyebrow">MÓDULO OPERACIONAL</span><h1>${schema.title}</h1><p>${rows.length} registro(s) armazenado(s).</p></div><button id="new">+ Novo ${schema.title.slice(0, -1)}</button></header><div class="table"><table><thead><tr>${schema.columns.map((column) => `<th>${labels[column] || column}</th>`).join("")}<th>AÇÕES</th></tr></thead><tbody id="records-table-body"></tbody></table><div class="pagination"><button id="previous-page" class="page-button">← Anterior</button><span id="page-info"></span><button id="next-page" class="page-button">Próxima →</button></div></div>`;
     element("#new").onclick = () => renderForm(resource, {});
-    document.querySelectorAll(".edit").forEach((button) => { button.onclick = () => renderForm(resource, rows.find((row) => String(row[schema.id]) === button.dataset.id)); });
-    document.querySelectorAll(".del").forEach((button) => { button.onclick = () => deleteResource(resource, button.dataset.id); });
+    element("#previous-page").onclick = () => { currentPage -= 1; renderTablePage(); };
+    element("#next-page").onclick = () => { currentPage += 1; renderTablePage(); };
+    renderTablePage();
   } catch (error) { renderError(error); }
 }
 
@@ -108,25 +125,71 @@ async function renderDashboard() {
   try {
     const data = await api("dashboard");
     const value = (key) => data[key][0] ? data[key][0].total : 0;
-    element("#content").innerHTML = `<header><span class="eyebrow">DASHBOARD / AO VIVO</span><h1>Visão analítica</h1><p>Leitura rápida do movimento no banco.</p></header><div class="metrics"><div>JOGOS<strong>${value("jogos")}</strong></div><div>JOGADORES<strong>${value("jogadores")}</strong></div><div class="lime">MÉDIA DAS NOTAS<strong>${Number(value("media")).toFixed(2)}</strong></div></div><div class="charts"><section><span class="eyebrow">DISTRIBUIÇÃO</span><h2>Jogos por gênero</h2>${renderBars(data.generos)}</section><section><span class="eyebrow">RANKING</span><h2>Mais avaliados</h2>${renderBars(data.ranking)}</section></div>`;
+    element("#content").innerHTML = `<header><span class="eyebrow">DASHBOARD / AO VIVO</span><h1>Visão analítica</h1><p>Leitura rápida do movimento no banco.</p></header><div class="metrics"><div>JOGOS<strong>${value("jogos")}</strong></div><div>JOGADORES<strong>${value("jogadores")}</strong></div><div class="lime">MÉDIA DAS NOTAS<strong>${Number(value("media")).toFixed(2)}</strong></div></div><div class="charts"><section><span class="eyebrow">DISTRIBUIÇÃO</span><h2>Jogos por gênero</h2>${renderBars(data.generos)}</section><section><span class="eyebrow">RANKING</span><h2>Mais avaliados</h2>${renderBars(data.ranking)}</section><section><span class="eyebrow">STATUS</span><h2>Status das avaliações</h2>${renderBars(data.status)}</section><section><span class="eyebrow">NOTAS</span><h2>Distribuição de notas</h2>${renderBars(data.notas, "Nota", "Quantidade")}</section></div><div class="analysis-grid"><section class="analysis-panel"><span class="eyebrow">DESEMPENHO</span><h2>Média de notas por jogo</h2>${renderAnalysisTable(data.mediaJogos)}</section><section class="analysis-panel"><span class="eyebrow">ENGAJAMENTO</span><h2>Horas por jogador</h2>${renderAnalysisTable(data.horasJogadores)}</section></div>`;
   } catch (error) { renderError(error); }
 }
 
-function renderBars(rows) {
-  const max = Math.max(...rows.map((row) => Number(row.total)), 1);
-  return rows.map((row) => `<p class="bar"><span>${escapeHtml(row.nome)}</span><i style="width:${Number(row.total) / max * 100}%"></i><b>${row.total}</b></p>`).join("");
+function renderBars(rows, labelKey = "nome", valueKey = "total") {
+  const max = Math.max(...rows.map((row) => Number(row[valueKey])), 1);
+  return rows.map((row) => `<p class="bar"><span>${escapeHtml(row[labelKey])}</span><i style="width:${Number(row[valueKey]) / max * 100}%"></i><b>${row[valueKey]}</b></p>`).join("");
+}
+
+function renderAnalysisTable(rows) {
+  const columns = rows.length ? Object.keys(rows[0]) : [];
+  return `<div class="analysis-table"><table><thead><tr>${columns.map((column) => `<th>${escapeHtml(column)}</th>`).join("")}</tr></thead><tbody>${rows.slice(0, 10).map((row) => `<tr>${columns.map((column) => `<td>${escapeHtml(row[column])}</td>`).join("")}</tr>`).join("") || "<tr><td>Nenhum dado disponível.</td></tr>"}</tbody></table></div>`;
 }
 
 async function renderQueries() {
-  element("#content").innerHTML = `<header><span class="eyebrow">EXPLORAÇÃO</span><h1>Consultas</h1><p>Consulte os dados operacionais.</p></header><div class="query"><select id="query-resource"><option>jogos</option><option>jogadores</option><option>plataformas</option><option>avaliacoes</option></select><input id="query-term" placeholder="Buscar por texto"><button id="run-query">Consultar →</button></div><div id="query-result"></div>`;
+  const options = {
+    Jogos: {
+      Simples: ["Listar todos", "Buscar por ID", "Buscar por nome"],
+      Filtros: ["Filtrar por genero", "Filtrar por ano"],
+      Joins: ["Jogos com jogadores"],
+      Agregações: ["Contar total", "Agrupar por genero", "Jogos mais avaliados"]
+    },
+    Jogadores: {
+      Simples: ["Listar todos", "Buscar por ID", "Buscar por nome"],
+      Filtros: ["Buscar por nickname"],
+      Joins: ["Jogadores com jogos"],
+      Agregações: ["Contar total", "Contar por jogo"]
+    },
+    Plataformas: {
+      Simples: ["Listar todas", "Buscar por ID", "Buscar por nome"],
+      Filtros: ["Filtrar por nome"],
+      Joins: ["Plataformas com jogadores e jogos"],
+      Agregações: ["Contar total", "Media horas jogadas", "Total de horas por jogador"]
+    },
+    Avaliacoes: {
+      Simples: ["Listar todas", "Buscar por ID", "Buscar por nome"],
+      Filtros: ["Filtrar por nota", "Filtrar por status"],
+      Joins: ["Avaliações com jogadores e jogos"],
+      Agregações: ["Contar total", "Media notas gerais", "Media notas por jogo", "Distribuicao de notas", "Jogos mais avaliados", "Avaliacoes recentes"]
+    }
+  };
+  const tableSelect = Object.keys(options).map((table) => `<option>${table}</option>`).join("");
+  element("#content").innerHTML = `<header><span class="eyebrow">EXPLORAÇÃO / DQL</span><h1>Consultas</h1><p>Execute consultas simples, filtros, joins e agregações diretamente no banco.</p></header><div class="query query-builder"><label>Tabela<select id="query-table">${tableSelect}</select></label><label>Modo<select id="query-mode"><option>Simples</option><option>Filtros</option><option>Joins</option><option>Agregações</option></select></label><label>Consulta<select id="query-choice"></select></label><label id="query-parameter-label">Parâmetro<input id="query-parameter" placeholder="Opcional"></label><button id="run-query">Executar consulta →</button></div><div id="query-result"></div>`;
+  const table = element("#query-table");
+  const mode = element("#query-mode");
+  const choice = element("#query-choice");
+  const parameterLabel = element("#query-parameter-label");
+
+  function updateChoices() {
+    choice.innerHTML = options[table.value][mode.value].map((item) => `<option>${item}</option>`).join("");
+    const needsParameter = mode.value === "Filtros" || mode.value === "Simples" && ["Buscar por ID", "Buscar por nome"].includes(choice.value) || choice.value === "Avaliações recentes";
+    parameterLabel.style.display = needsParameter ? "flex" : "none";
+    element("#query-parameter").placeholder = choice.value === "Avaliações recentes" ? "Quantidade" : "Valor da consulta";
+  }
+  table.onchange = updateChoices;
+  mode.onchange = updateChoices;
+  choice.onchange = updateChoices;
+  updateChoices();
   element("#run-query").onclick = async () => {
-    const resource = element("#query-resource").value;
-    const term = element("#query-term").value.toLowerCase();
-    const names = { jogos: "Jogos", jogadores: "Jogadores", plataformas: "Plataformas", avaliacoes: "Avaliacoes" };
-    const consulta = term ? "Buscar por nome" : "Listar todos";
-    const url = `consultas?tabela=${encodeURIComponent(names[resource])}&modo=Simples&consulta=${encodeURIComponent(consulta)}&parametro=${encodeURIComponent(term)}`;
-    const rows = await api(url);
-    element("#query-result").innerHTML = `<pre>${escapeHtml(JSON.stringify(rows, null, 2))}</pre>`;
+    try {
+      const url = `consultas?tabela=${encodeURIComponent(table.value)}&modo=${encodeURIComponent(mode.value)}&consulta=${encodeURIComponent(choice.value)}&parametro=${encodeURIComponent(element("#query-parameter").value)}`;
+      const rows = await api(url);
+      const columns = rows.length ? Object.keys(rows[0]) : [];
+      element("#query-result").innerHTML = `<div class="query-result-heading"><span>Resultado · ${rows.length} linha(s)</span></div><div class="table"><table><thead><tr>${columns.map((column) => `<th>${escapeHtml(column)}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${columns.map((column) => `<td>${escapeHtml(row[column])}</td>`).join("")}</tr>`).join("") || `<tr><td>Nenhum resultado encontrado.</td></tr>`}</tbody></table></div>`;
+    } catch (error) { renderError(error); }
   };
 }
 
