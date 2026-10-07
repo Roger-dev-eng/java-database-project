@@ -4,6 +4,8 @@ Aplicação web em Java com frontend HTML, CSS e JavaScript para gerenciamento e
 
 O site reúne login simples, operações CRUD, consultas SQL, joins, agregações e dashboard analítico em uma única interface. O código Java Swing e o dashboard Streamlit permanecem no repositório como implementações legadas, mas não são necessários para executar o site atual.
 
+- url demo: https://jogos-dashboard.onrender.com
+
 ## Conteúdo
 
 - [Visão geral](#visão-geral)
