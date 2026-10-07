@@ -7,6 +7,8 @@ const schemas = {
 const labels = { id_jogo: "ID", id_jogador: "ID", id_plataforma: "ID", id_avaliacao: "ID", nome: "Nome", nickname: "Nickname", email: "E-mail", ano_lancamento: "Ano", desenvolvedora: "Desenvolvedora", genero: "Gênero", horas_jogadas: "Horas", ultima_sessao: "Última sessão", fk_jogo: "Jogo", fk_jogador: "Jogador", nota: "Nota", comentario: "Comentário", status: "Status", data_avaliacao: "Data" };
 const element = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+const resourceCache = new Map();
+let navigationSequence = 0;
 
 async function api(path, options) {
   document.body.classList.add("is-loading");
@@ -39,11 +41,12 @@ function showToast(message, isError) {
 }
 
 function navigate(page) {
+  const navigationId = ++navigationSequence;
   document.querySelectorAll("#nav button").forEach((button) => button.classList.toggle("active", button.dataset.page === page));
   if (page === "home") renderHome();
   else if (page === "dashboard") renderDashboard();
   else if (page === "consultas") renderQueries();
-  else renderResource(page);
+  else renderResource(page, navigationId);
 }
 
 function atomButton(label, action, kind = "secondary") {
@@ -71,10 +74,19 @@ function renderHome() {
   });
 }
 
-async function renderResource(resource) {
+async function renderResource(resource, navigationId = ++navigationSequence) {
   const schema = schemas[resource];
   try {
-    const rows = await api(resource);
+    const cached = resourceCache.get(resource);
+    let rows;
+    if (cached && Date.now() - cached.updatedAt < 60000) {
+      rows = cached.rows;
+    } else {
+      element("#content").innerHTML = `<header><span class="eyebrow">MÓDULO OPERACIONAL</span><h1>${schema.title}</h1><p>Carregando registros...</p></header>`;
+      rows = await api(resource);
+      resourceCache.set(resource, { rows, updatedAt: Date.now() });
+    }
+    if (navigationId !== navigationSequence) return;
     const pageSize = 20;
     let currentPage = 1;
     const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
@@ -96,7 +108,7 @@ async function renderResource(resource) {
     element("#previous-page").onclick = () => { currentPage -= 1; renderTablePage(); };
     element("#next-page").onclick = () => { currentPage += 1; renderTablePage(); };
     renderTablePage();
-  } catch (error) { renderError(error); }
+  } catch (error) { if (navigationId === navigationSequence) renderError(error); }
 }
 
 function renderForm(resource, row) {
@@ -109,6 +121,7 @@ function renderForm(resource, row) {
     const payload = Object.fromEntries(new FormData(event.target));
     try {
       await api(row[schema.id] ? `${resource}/${row[schema.id]}` : resource, { method: row[schema.id] ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      resourceCache.delete(resource);
       showToast("Registro salvo.");
       renderResource(resource);
     } catch (error) { showToast(error.message, true); }
@@ -117,7 +130,7 @@ function renderForm(resource, row) {
 
 async function deleteResource(resource, id) {
   if (!confirm("Excluir este registro?")) return;
-  try { await api(`${resource}/${id}`, { method: "DELETE" }); showToast("Registro excluído."); renderResource(resource); }
+  try { await api(`${resource}/${id}`, { method: "DELETE" }); resourceCache.delete(resource); showToast("Registro excluído."); renderResource(resource); }
   catch (error) { showToast(error.message, true); }
 }
 
