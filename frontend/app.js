@@ -1,8 +1,8 @@
 const schemas = {
-  jogos: { title: "Jogos", id: "id_jogo", columns: ["id_jogo", "nome", "ano_lancamento", "desenvolvedora", "genero"], fields: [["nome", "Nome", "text"], ["ano_lancamento", "Ano", "number"], ["desenvolvedora", "Desenvolvedora", "text"], ["genero", "Gênero", "text"]] },
-  jogadores: { title: "Jogadores", id: "id_jogador", columns: ["id_jogador", "nickname", "email", "fk_jogo"], fields: [["nickname", "Nickname", "text"], ["email", "E-mail", "email"], ["fk_jogo", "Jogo associado", "number"]] },
-  plataformas: { title: "Plataformas", id: "id_plataforma", columns: ["id_plataforma", "nome", "horas_jogadas", "ultima_sessao", "fk_jogador"], fields: [["nome", "Nome", "text"], ["horas_jogadas", "Horas jogadas", "number"], ["fk_jogador", "Jogador associado", "number"]] },
-  avaliacoes: { title: "Avaliações", id: "id_avaliacao", columns: ["id_avaliacao", "nota", "comentario", "status", "data_avaliacao", "fk_jogador", "fk_jogo"], fields: [["nota", "Nota", "number"], ["comentario", "Comentário", "text"], ["status", "Status", "text"], ["data_avaliacao", "Data", "date"], ["fk_jogador", "Jogador", "number"], ["fk_jogo", "Jogo", "number"]] }
+  jogos: { title: "Jogos", singular: "Jogo", article: "Novo", id: "id_jogo", columns: ["id_jogo", "nome", "ano_lancamento", "desenvolvedora", "genero"], fields: [["nome", "Nome", "text"], ["ano_lancamento", "Ano", "number"], ["desenvolvedora", "Desenvolvedora", "text"], ["genero", "Gênero", "text"]] },
+  jogadores: { title: "Jogadores", singular: "Jogador", article: "Novo", id: "id_jogador", columns: ["id_jogador", "nickname", "email", "fk_jogo"], fields: [["nickname", "Nickname", "text"], ["email", "E-mail", "email"], ["fk_jogo", "Jogo associado", "number"]] },
+  plataformas: { title: "Plataformas", singular: "Plataforma", article: "Nova", id: "id_plataforma", columns: ["id_plataforma", "nome", "horas_jogadas", "ultima_sessao", "fk_jogador"], fields: [["nome", "Nome", "text"], ["horas_jogadas", "Horas jogadas", "number"], ["fk_jogador", "Jogador associado", "number"]] },
+  avaliacoes: { title: "Avaliações", singular: "Avaliação", article: "Nova", id: "id_avaliacao", columns: ["id_avaliacao", "nota", "comentario", "status", "data_avaliacao", "fk_jogador", "fk_jogo"], fields: [["nota", "Nota", "number"], ["comentario", "Comentário", "text"], ["status", "Status", "text"], ["data_avaliacao", "Data", "date"], ["fk_jogador", "Jogador", "number"], ["fk_jogo", "Jogo", "number"]] }
 };
 const labels = { id_jogo: "ID", id_jogador: "ID", id_plataforma: "ID", id_avaliacao: "ID", nome: "Nome", nickname: "Nickname", email: "E-mail", ano_lancamento: "Ano", desenvolvedora: "Desenvolvedora", genero: "Gênero", horas_jogadas: "Horas", ultima_sessao: "Última sessão", fk_jogo: "Jogo", fk_jogador: "Jogador", nota: "Nota", comentario: "Comentário", status: "Status", data_avaliacao: "Data" };
 const element = (selector) => document.querySelector(selector);
@@ -103,7 +103,7 @@ async function renderResource(resource, navigationId = ++navigationSequence) {
       document.querySelectorAll(".del").forEach((button) => { button.onclick = () => deleteResource(resource, button.dataset.id); });
     }
 
-    element("#content").innerHTML = `<header class="row"><div><span class="eyebrow">MÓDULO OPERACIONAL</span><h1>${schema.title}</h1><p>${rows.length} registro(s) armazenado(s).</p></div><button id="new">+ Novo ${schema.title.slice(0, -1)}</button></header><div class="table"><table><thead><tr>${schema.columns.map((column) => `<th>${labels[column] || column}</th>`).join("")}<th>AÇÕES</th></tr></thead><tbody id="records-table-body"></tbody></table><div class="pagination"><button id="previous-page" class="page-button">← Anterior</button><span id="page-info"></span><button id="next-page" class="page-button">Próxima →</button></div></div>`;
+    element("#content").innerHTML = `<header class="row"><div><span class="eyebrow">MÓDULO OPERACIONAL</span><h1>${schema.title}</h1><p>${rows.length} registro(s) armazenado(s).</p></div><button id="new">+ ${schema.article} ${schema.singular}</button></header><div class="table"><table><thead><tr>${schema.columns.map((column) => `<th>${labels[column] || column}</th>`).join("")}<th>AÇÕES</th></tr></thead><tbody id="records-table-body"></tbody></table><div class="pagination"><button id="previous-page" class="page-button">← Anterior</button><span id="page-info"></span><button id="next-page" class="page-button">Próxima →</button></div></div>`;
     element("#new").onclick = () => renderForm(resource, {});
     element("#previous-page").onclick = () => { currentPage -= 1; renderTablePage(); };
     element("#next-page").onclick = () => { currentPage += 1; renderTablePage(); };
@@ -113,9 +113,13 @@ async function renderResource(resource, navigationId = ++navigationSequence) {
 
 function renderForm(resource, row) {
   const schema = schemas[resource];
-  const fields = schema.fields.map(([name, label, type]) => `<label>${label}<input name="${name}" type="${type}" value="${escapeHtml(row[name])}" required></label>`).join("");
-  element("#content").innerHTML = `<header class="row"><div><span class="eyebrow">${row[schema.id] ? "EDITAR" : "NOVO"} REGISTRO</span><h1>${row[schema.id] ? "Editar" : "Novo"} ${schema.title}</h1></div><button class="back" id="back">← Voltar</button></header><form id="record" class="form">${fields}<button type="submit">Salvar registro →</button></form>`;
-  element("#back").onclick = () => renderResource(resource);
+  const fields = schema.fields.map(([name, label, type]) => {
+    const minimum = name === "ano_lancamento" || name === "horas_jogadas" ? 'min="0"' : "";
+    return `<label>${label}<input name="${name}" type="${type}" ${minimum} value="${escapeHtml(row[name])}" required></label>`;
+  }).join("");
+  const heading = row[schema.id] ? `Editar ${schema.singular}` : `${schema.article} ${schema.singular}`;
+  element("#content").innerHTML = `<header class="row"><div><span class="eyebrow">${row[schema.id] ? "EDITAR" : "NOVO"} REGISTRO</span><h1>${heading}</h1></div><button class="back" id="back">← Voltar</button></header><form id="record" class="form">${fields}<button type="submit">Salvar registro →</button></form>`;
+  element("#back").onclick = () => navigate("home");
   element("#record").onsubmit = async (event) => {
     event.preventDefault();
     const payload = Object.fromEntries(new FormData(event.target));
@@ -138,7 +142,9 @@ async function renderDashboard() {
   try {
     const data = await api("dashboard");
     const value = (key) => data[key][0] ? data[key][0].total : 0;
-    element("#content").innerHTML = `<header><span class="eyebrow">DASHBOARD / AO VIVO</span><h1>Visão analítica</h1><p>Leitura rápida do movimento no banco.</p></header><div class="metrics"><div>JOGOS<strong>${value("jogos")}</strong></div><div>JOGADORES<strong>${value("jogadores")}</strong></div><div class="lime">MÉDIA DAS NOTAS<strong>${Number(value("media")).toFixed(2)}</strong></div></div><div class="charts"><section><span class="eyebrow">DISTRIBUIÇÃO</span><h2>Jogos por gênero</h2>${renderBars(data.generos)}</section><section><span class="eyebrow">RANKING</span><h2>Mais avaliados</h2>${renderBars(data.ranking)}</section><section><span class="eyebrow">STATUS</span><h2>Status das avaliações</h2>${renderBars(data.status)}</section><section><span class="eyebrow">NOTAS</span><h2>Distribuição de notas</h2>${renderBars(data.notas, "Nota", "Quantidade")}</section></div><div class="analysis-grid"><section class="analysis-panel"><span class="eyebrow">DESEMPENHO</span><h2>Média de notas por jogo</h2>${renderAnalysisTable(data.mediaJogos)}</section><section class="analysis-panel"><span class="eyebrow">ENGAJAMENTO</span><h2>Horas por jogador</h2>${renderAnalysisTable(data.horasJogadores)}</section></div>`;
+    const mediaJogos = [...data.mediaJogos].sort((a, b) => Number(b.Total) - Number(a.Total) || Number(b.Media) - Number(a.Media));
+    const horasJogadores = [...data.horasJogadores].sort((a, b) => Number(b["Total Horas"]) - Number(a["Total Horas"]));
+    element("#content").innerHTML = `<header><span class="eyebrow">DASHBOARD / AO VIVO</span><h1>Visão analítica</h1><p>Leitura rápida do movimento no banco.</p></header><div class="metrics"><div>JOGOS<strong>${value("jogos")}</strong></div><div>JOGADORES<strong>${value("jogadores")}</strong></div><div class="lime">MÉDIA DAS NOTAS<strong>${Number(value("media")).toFixed(2)}</strong></div></div><div class="charts"><section><span class="eyebrow">DISTRIBUIÇÃO</span><h2>Jogos por gênero</h2>${renderBars(data.generos)}</section><section><span class="eyebrow">RANKING</span><h2>Mais avaliados</h2>${renderBars(data.ranking)}</section><section><span class="eyebrow">STATUS</span><h2>Status das avaliações</h2>${renderBars(data.status)}</section><section><span class="eyebrow">NOTAS</span><h2>Distribuição de notas</h2>${renderBars(data.notas, "Nota", "Quantidade")}</section></div><div class="analysis-grid"><section class="analysis-panel"><span class="eyebrow">DESEMPENHO</span><h2>Média de notas por jogo</h2>${renderAnalysisTable(mediaJogos)}</section><section class="analysis-panel"><span class="eyebrow">ENGAJAMENTO</span><h2>Horas por jogador</h2>${renderAnalysisTable(horasJogadores)}</section></div>`;
   } catch (error) { renderError(error); }
 }
 
@@ -204,9 +210,16 @@ async function renderQueries() {
     try {
       const url = `consultas?tabela=${encodeURIComponent(table.value)}&modo=${encodeURIComponent(mode.value)}&consulta=${encodeURIComponent(choice.value)}&parametro=${encodeURIComponent(element("#query-parameter").value)}`;
       const rows = await api(url);
+      const parameter = element("#query-parameter").value.trim();
+      if (!rows.length && parameter) {
+        element("#query-result").innerHTML = `<div class="error"><h2>Nenhum resultado encontrado</h2><p>Não encontramos resultados para o parâmetro "${escapeHtml(parameter)}" na consulta "${escapeHtml(choice.value)}" da tabela "${escapeHtml(table.value)}". Confira o valor informado e tente novamente.</p></div>`;
+        return;
+      }
       const columns = rows.length ? Object.keys(rows[0]) : [];
       element("#query-result").innerHTML = `<div class="query-result-heading"><span>Resultado · ${rows.length} linha(s)</span></div><div class="table"><table><thead><tr>${columns.map((column) => `<th>${escapeHtml(column)}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${columns.map((column) => `<td>${escapeHtml(row[column])}</td>`).join("")}</tr>`).join("") || `<tr><td>Nenhum resultado encontrado.</td></tr>`}</tbody></table></div>`;
-    } catch (error) { renderError(error); }
+    } catch (error) {
+      element("#query-result").innerHTML = `<div class="error"><h2>Não foi possível executar a consulta</h2><p>${escapeHtml(error.message)}</p></div>`;
+    }
   };
 }
 
@@ -224,10 +237,17 @@ element("#login-form").onsubmit = (event) => {
   event.preventDefault();
   const user = element("#user-name").value.trim();
   if (!user) return;
+  if (/\d/.test(user)) {
+    showToast("O nome informado não pode conter números.", true);
+    return;
+  }
   localStorage.setItem("arcade-user", user);
   enterApp(user);
 };
 element("#logout").onclick = () => { localStorage.removeItem("arcade-user"); window.location.reload(); };
 document.querySelectorAll("#nav button").forEach((button) => { button.onclick = () => navigate(button.dataset.page); });
 const savedUser = localStorage.getItem("arcade-user");
-if (savedUser) enterApp(savedUser);
+if (savedUser && /\d/.test(savedUser)) {
+  localStorage.removeItem("arcade-user");
+  showToast("O nome informado não pode conter números.", true);
+} else if (savedUser) enterApp(savedUser);

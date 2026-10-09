@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import app.validation.Validator;
 
 public class ConsultaService {
     private final Connection conexao;
@@ -28,7 +29,7 @@ public class ConsultaService {
     private ConsultaResultado executarSimples(String tabela, String consulta, String parametro) throws Exception {
         if ("Jogos".equals(tabela)) {
             if ("Buscar por ID".equals(consulta)) {
-                Object[] linha = dql.jogos.Selects.buscarPorId(conexao, Integer.parseInt(parametro));
+                Object[] linha = dql.jogos.Selects.buscarPorId(conexao, Validator.requiredInt(parametro, "ID"));
                 return linhaUnica(new String[]{"ID", "Nome", "Ano", "Desenvolvedora", "Genero"}, linha);
             }
             if ("Buscar por nome".equals(consulta)) {
@@ -38,7 +39,7 @@ public class ConsultaService {
         }
         if ("Jogadores".equals(tabela)) {
             if ("Buscar por ID".equals(consulta)) {
-                Object[] linha = dql.jogadores.Selects.buscarPorId(conexao, Integer.parseInt(parametro));
+                Object[] linha = dql.jogadores.Selects.buscarPorId(conexao, Validator.requiredInt(parametro, "ID"));
                 return linhaUnica(new String[]{"ID", "Nickname", "Email", "Jogo (ID)"}, linha);
             }
             if ("Buscar por nome".equals(consulta)) {
@@ -48,7 +49,7 @@ public class ConsultaService {
         }
         if ("Plataformas".equals(tabela)) {
             if ("Buscar por ID".equals(consulta)) {
-                Object[] linha = dql.plataformas.Selects.buscarPorId(conexao, Integer.parseInt(parametro));
+                Object[] linha = dql.plataformas.Selects.buscarPorId(conexao, Validator.requiredInt(parametro, "ID"));
                 return linhaUnica(new String[]{"ID", "Nome", "Horas", "Ultima Sessao", "Jogador (ID)"}, linha);
             }
             if ("Buscar por nome".equals(consulta)) {
@@ -57,7 +58,7 @@ public class ConsultaService {
             return resultado(new String[]{"ID", "Nome", "Horas", "Ultima Sessao", "Jogador (ID)"}, dql.plataformas.Selects.listarTodas(conexao));
         }
         if ("Buscar por ID".equals(consulta)) {
-            Object[] linha = dql.avaliacoes.Selects.buscarPorId(conexao, Integer.parseInt(parametro));
+            Object[] linha = dql.avaliacoes.Selects.buscarPorId(conexao, Validator.requiredInt(parametro, "ID"));
             return linhaUnica(new String[]{"ID", "Nota", "Comentario", "Status", "Data", "Jogador (ID)", "Jogo (ID)"}, linha);
         }
         if ("Buscar por nome".equals(consulta)) {

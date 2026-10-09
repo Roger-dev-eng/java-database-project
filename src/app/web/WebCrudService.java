@@ -10,6 +10,7 @@ import app.repository.JogadorRepository;
 import app.repository.JogoRepository;
 import app.repository.PlataformaRepository;
 import app.validation.Validator;
+import app.validation.ValidationException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -38,8 +39,15 @@ public final class WebCrudService {
             switch (recurso) {
                 case "jogos" -> new JogoRepository(connection).inserir(jogo(null, dados));
                 case "jogadores" -> new JogadorRepository(connection).inserir(jogador(null, dados));
-                case "plataformas" -> new PlataformaRepository(connection).inserir(plataforma(null, dados));
-                case "avaliacoes" -> new AvaliacaoRepository(connection).inserir(avaliacao(null, dados));
+                case "plataformas" -> {
+                    validarJogador(connection, Validator.requiredInt(dados.get("fk_jogador"), "Jogador"));
+                    new PlataformaRepository(connection).inserir(plataforma(null, dados));
+                }
+                case "avaliacoes" -> {
+                    validarJogador(connection, Validator.requiredInt(dados.get("fk_jogador"), "Jogador"));
+                    validarJogo(connection, Validator.requiredInt(dados.get("fk_jogo"), "Jogo"));
+                    new AvaliacaoRepository(connection).inserir(avaliacao(null, dados));
+                }
                 default -> throw new IllegalArgumentException("Recurso não encontrado.");
             }
         }
@@ -50,7 +58,10 @@ public final class WebCrudService {
             switch (recurso) {
                 case "jogos" -> new JogoRepository(connection).atualizar(jogo(id, dados));
                 case "jogadores" -> new JogadorRepository(connection).atualizar(jogador(id, dados));
-                case "plataformas" -> new PlataformaRepository(connection).atualizar(plataforma(id, dados));
+                case "plataformas" -> {
+                    validarJogador(connection, Validator.requiredInt(dados.get("fk_jogador"), "Jogador"));
+                    new PlataformaRepository(connection).atualizar(plataforma(id, dados));
+                }
                 case "avaliacoes" -> atualizarAvaliacao(connection, id, dados);
                 default -> throw new IllegalArgumentException("Recurso não encontrado.");
             }
@@ -58,6 +69,8 @@ public final class WebCrudService {
     }
 
     private void atualizarAvaliacao(Connection connection, int id, Map<String, String> dados) throws Exception {
+        validarJogador(connection, Validator.requiredInt(dados.get("fk_jogador"), "Jogador"));
+        validarJogo(connection, Validator.requiredInt(dados.get("fk_jogo"), "Jogo"));
         new AvaliacaoRepository(connection).atualizar(avaliacao(id, dados));
         try (PreparedStatement statement = connection.prepareStatement("CALL pr_atualizar_status_avaliacao(?, ?)")) {
             statement.setInt(1, id);
@@ -80,7 +93,9 @@ public final class WebCrudService {
     }
 
     private Jogo jogo(Integer id, Map<String, String> data) {
-        return new Jogo(id, Validator.requiredText(data.get("nome"), "Nome"), Validator.requiredInt(data.get("ano_lancamento"), "Ano"), Validator.requiredText(data.get("desenvolvedora"), "Desenvolvedora"), Validator.requiredText(data.get("genero"), "Gênero"));
+        Integer ano = Validator.requiredInt(data.get("ano_lancamento"), "Ano");
+        Validator.rangeInclusive(ano, 0, Integer.MAX_VALUE, "Ano");
+        return new Jogo(id, Validator.requiredText(data.get("nome"), "Nome"), ano, Validator.requiredText(data.get("desenvolvedora"), "Desenvolvedora"), Validator.requiredText(data.get("genero"), "Gênero"));
     }
 
     private Jogador jogador(Integer id, Map<String, String> data) {
@@ -88,7 +103,9 @@ public final class WebCrudService {
     }
 
     private Plataforma plataforma(Integer id, Map<String, String> data) {
-        return new Plataforma(id, Validator.requiredText(data.get("nome"), "Nome"), Validator.requiredInt(data.get("horas_jogadas"), "Horas jogadas"), null, Validator.requiredInt(data.get("fk_jogador"), "Jogador"));
+        Integer horas = Validator.requiredInt(data.get("horas_jogadas"), "Horas jogadas");
+        Validator.rangeInclusive(horas, 0, Integer.MAX_VALUE, "Horas jogadas");
+        return new Plataforma(id, Validator.requiredText(data.get("nome"), "Nome"), horas, null, Validator.requiredInt(data.get("fk_jogador"), "Jogador"));
     }
 
     private Avaliacao avaliacao(Integer id, Map<String, String> data) {
@@ -126,5 +143,25 @@ public final class WebCrudService {
         Map<String, Object> result = new LinkedHashMap<>();
         for (int index = 0; index < values.length; index += 2) result.put(String.valueOf(values[index]), values[index + 1]);
         return result;
+    }
+
+    private void validarJogador(Connection connection, int id) throws Exception {
+        validarReferencia(connection, "jogadores", "id_jogador", id, "Jogador");
+    }
+
+    private void validarJogo(Connection connection, int id) throws Exception {
+        validarReferencia(connection, "jogos", "id_jogo", id, "Jogo");
+    }
+
+    private void validarReferencia(Connection connection, String tabela, String colunaId, int id, String entidade) throws Exception {
+        String sql = "SELECT 1 FROM " + tabela + " WHERE " + colunaId + " = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (var result = statement.executeQuery()) {
+                if (!result.next()) {
+                    throw new ValidationException(entidade + " com ID " + id + " não encontrado. Confira o ID e cadastre esse registro antes de continuar.");
+                }
+            }
+        }
     }
 }
